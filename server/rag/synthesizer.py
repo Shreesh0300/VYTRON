@@ -1274,22 +1274,37 @@ class RAGSynthesizer:
         self, c: dict[str, Any], chunks: list[dict[str, Any]]
     ) -> dict[str, Any] | None:
         prompt = self._build_llm_rag_prompt(c, chunks)
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={self.gemini_key}"
-        try:
-            async with httpx.AsyncClient(timeout=15.0) as client:
-                res = await client.post(
-                    url,
-                    json={
-                        "contents": [{"parts": [{"text": prompt}]}],
-                        "generationConfig": {"responseMimeType": "application/json"}
-                    }
-                )
-                if res.status_code == 200:
-                    data = res.json()
-                    text = data["candidates"][0]["content"]["parts"][0]["text"]
-                    return self._parse_llm_json(text, c, chunks, "Google Gemini 1.5 Flash")
-        except Exception:
-            pass
+        gemini_models = [
+            os.getenv("LLM_MODEL", "gemini-flash-lite-latest"),
+            "gemini-flash-lite-latest",
+            "gemini-3.5-flash-lite",
+            "gemini-3.1-flash-lite",
+            "gemini-3.8-flash"
+        ]
+        seen = set()
+        for model in gemini_models:
+            if not model or model in seen:
+                continue
+            seen.add(model)
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={self.gemini_key}"
+            try:
+                async with httpx.AsyncClient(timeout=15.0) as client:
+                    res = await client.post(
+                        url,
+                        json={
+                            "contents": [{"parts": [{"text": prompt}]}],
+                            "generationConfig": {
+                                "responseMimeType": "application/json",
+                                "temperature": 0.1
+                            }
+                        }
+                    )
+                    if res.status_code == 200:
+                        data = res.json()
+                        text = data["candidates"][0]["content"]["parts"][0]["text"]
+                        return self._parse_llm_json(text, c, chunks, f"Google Gemini ({model})")
+            except Exception:
+                continue
         return None
 
     async def _call_openai(

@@ -19,6 +19,9 @@ import json
 import asyncio
 import httpx
 from typing import Any, Optional
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from server.rag.pipeline import get_vector_store
 from server.config import SERVERS_CONFIG, RECOMMENDED_ACTIONS
@@ -357,11 +360,18 @@ class ChatbotSynthesizer:
     """
     RAG-grounded chat response engine.
     Produces strictly structured, evidence-based responses combining Vector Docs & Live Telemetry.
+    Integrates Gemini Flash Lite and Ollama with rigorous anti-hallucination guards.
     """
 
     def __init__(self):
         self.ollama_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-        self.gemini_key = os.getenv("GEMINI_API_KEY", "")
+
+    def _get_gemini_key(self) -> str:
+        key = os.getenv("GEMINI_API_KEY", "").strip()
+        if not key:
+            load_dotenv(override=True)
+            key = os.getenv("GEMINI_API_KEY", "").strip()
+        return key.strip("\"'")
 
     async def generate_response(
         self,
@@ -394,7 +404,27 @@ class ChatbotSynthesizer:
         # Check if vector DB had any relevant results
         retrieval_succeeded = len(chunks) > 0
 
-        # Attempt LLM generation if configured
+        # Safety: If query is completely off-target with zero chunks, no incident, and not server-related
+        q_lower = query.lower()
+        is_known_server = any(sid.lower() in q_lower for sid in ["app-01", "db-01", "auth-01", "backup-01", "network-01", "database", "latency", "login", "packet"])
+        if not retrieval_succeeded and not incident and not is_known_server:
+            answer = (
+                f"{INSUFFICIENT_KNOWLEDGE_MESSAGE}\n\n"
+                f"**[General Troubleshooting Suggestion — Not from Retrieved Knowledge Base]**\n"
+                f"To investigate this issue further:\n"
+                f"1. Inspect active incident cards and priority queues in the VYTRON dashboard.\n"
+                f"2. Select the affected node from the 5-Server Monitoring grid to inspect real-time parameter charts.\n"
+                f"3. Open the Incident Details modal and launch 'Investigate with AI' to retrieve grounded runbooks."
+            )
+            return {
+                "answer": answer,
+                "sources": [],
+                "retrieval_succeeded": False,
+                "incident_context_used": False,
+                "limitation": "No high-relevance documentation chunks found in vector store."
+            }
+
+        # Attempt LLM generation if configured (Gemini or Ollama)
         llm_response = await self._try_llm_generation(query, incident, chunks, telemetry, history)
         if llm_response:
             return {
@@ -428,39 +458,64 @@ class ChatbotSynthesizer:
         telemetry: dict[str, Any],
         history: list[dict[str, Any]]
     ) -> str | None:
-        """Attempts to invoke Ollama or Gemini if reachable."""
-        # 1. Try Ollama if local instance is up
-        try:
-            async with httpx.AsyncClient(timeout=10.0) as client:
-                test = await client.get(f"{self.ollama_url}/api/version")
-                if test.status_code == 200:
-                    prompt = self._build_llm_prompt(query, incident, chunks, telemetry, history)
-                    res = await client.post(
-                        f"{self.ollama_url}/api/generate",
-                        json={"model": "llama3.2", "prompt": prompt, "stream": False}
-                    )
-                    if res.status_code == 200:
-                        ans = res.json().get("response", "").strip()
-                        if ans:
-                            return ans
-        except Exception:
-            pass
+        """Attempts to invoke Gemini or Ollama with zero-hallucination temperature."""
+        gemini_key = self._get_gemini_key()
+        provider = os.getenv("LLM_PROVIDER", "").lower()
 
-        # 2. Try Gemini if API key is present
-        if self.gemini_key:
+        # 1. Try Gemini if API key is present
+        if gemini_key:
+            models_to_try = [
+                os.getenv("LLM_MODEL", "gemini-flash-lite-latest"),
+                "gemini-flash-lite-latest",
+                "gemini-3.5-flash-lite",
+                "gemini-3.1-flash-lite",
+                "gemini-3.8-flash"
+            ]
+            clean_models = []
+            for m in models_to_try:
+                if m and m not in clean_models:
+                    clean_models.append(m)
+
+            prompt = self._build_llm_prompt(query, incident, chunks, telemetry, history)
+
+            for model in clean_models:
+                try:
+                    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={gemini_key}"
+                    async with httpx.AsyncClient(timeout=15.0) as client:
+                        res = await client.post(
+                            url,
+                            json={
+                                "contents": [{"parts": [{"text": prompt}]}],
+                                "generationConfig": {
+                                    "temperature": 0.1,
+                                    "topP": 0.8,
+                                    "maxOutputTokens": 2048
+                                }
+                            }
+                        )
+                        if res.status_code == 200:
+                            data = res.json()
+                            ans = data["candidates"][0]["content"]["parts"][0]["text"].strip()
+                            if ans and len(ans) > 50:
+                                return self._verify_and_guard_response(ans, incident, telemetry, chunks)
+                except Exception as e:
+                    continue
+
+        # 2. Try Ollama if local instance is up
+        if provider == "ollama" or not gemini_key:
             try:
-                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={self.gemini_key}"
-                prompt = self._build_llm_prompt(query, incident, chunks, telemetry, history)
-                async with httpx.AsyncClient(timeout=12.0) as client:
-                    res = await client.post(
-                        url,
-                        json={"contents": [{"parts": [{"text": prompt}]}]}
-                    )
-                    if res.status_code == 200:
-                        data = res.json()
-                        ans = data["candidates"][0]["content"]["parts"][0]["text"].strip()
-                        if ans:
-                            return ans
+                async with httpx.AsyncClient(timeout=10.0) as client:
+                    test = await client.get(f"{self.ollama_url}/api/version")
+                    if test.status_code == 200:
+                        prompt = self._build_llm_prompt(query, incident, chunks, telemetry, history)
+                        res = await client.post(
+                            f"{self.ollama_url}/api/generate",
+                            json={"model": "llama3.2", "prompt": prompt, "stream": False}
+                        )
+                        if res.status_code == 200:
+                            ans = res.json().get("response", "").strip()
+                            if ans:
+                                return self._verify_and_guard_response(ans, incident, telemetry, chunks)
             except Exception:
                 pass
 
@@ -474,33 +529,113 @@ class ChatbotSynthesizer:
         telemetry: dict[str, Any],
         history: list[dict[str, Any]]
     ) -> str:
-        doc_texts = "\n---\n".join([f"Source: {c['metadata'].get('title')}\n{c['content']}" for c in chunks[:3]])
+        doc_blocks = []
+        for i, c in enumerate(chunks[:4], 1):
+            m = c.get("metadata", {})
+            title = m.get("title") or m.get("doc_name") or "Technical Runbook"
+            sec = m.get("section") or "Diagnostics"
+            doc_blocks.append(f"[Chunk {i}] Document: {title} | Section: {sec}\n{c.get('content', '').strip()}")
+        doc_texts = "\n\n".join(doc_blocks) if doc_blocks else "No specific runbook chunks retrieved from ChromaDB."
+
         hist_texts = "\n".join([f"{h['role'].upper()}: {h['content']}" for h in history[-4:]])
-        
-        return f"""You are VYTRON's AI IT Support Assistant, an expert SRE and Infrastructure Incident Specialist.
-Answer the user's technical operations question using ONLY the provided knowledge chunks and live telemetry.
-Follow this 7-section structured format for incident or troubleshooting inquiries:
-1. Understanding the Issue
-2. Possible Root Causes
-3. Evidence from VYTRON
-4. Recommended Investigation Steps
-5. Suggested Remediation
-6. Prevention Measures
-7. Retrieved Sources
 
-STRICT RULES:
-- Never fabricate server metrics or documentation citations.
-- If data is unavailable, state 'Not available'.
-- Commands must be non-destructive and specify the target OS.
+        target_sid = telemetry.get("target_server_id") or (incident.get("server_id") if incident else "APP-01")
+        srv_name = telemetry.get("server_name") or (incident.get("server_name") if incident else "Target Server")
 
-USER QUERY: {query}
-INCIDENT CONTEXT: {json.dumps(incident or {})}
-LIVE TELEMETRY: {json.dumps(telemetry)}
-RETRIEVED DOCUMENTATION CHUNKS:
-{doc_texts or "No relevant chunks found."}
-CONVERSATION HISTORY:
+        if incident:
+            obs_val = incident.get("observed_value", "Unknown")
+            thresh_val = incident.get("threshold_value", "Standard")
+            unit = incident.get("unit", "")
+            metric_name = incident.get("metric_name") or incident.get("metric_key", "Metric")
+            telemetry_truth = f"""GROUND TRUTH INCIDENT TELEMETRY (CANNOT BE ALTERED OR FABRICATED):
+- Target Server: {target_sid} ({srv_name})
+- Incident ID: {incident.get('incident_id', 'INC-UNKNOWN')}
+- Breached Metric: {metric_name} = {obs_val} {unit}
+- Configured Critical / Warning Threshold: {thresh_val} {unit}
+- Breach Severity / Priority: {incident.get('severity', 'CRITICAL')} (Priority: {incident.get('priority', 'P1')})
+- Live Operational State: {telemetry.get('current_status', 'CRITICAL')} (Health: {telemetry.get('current_health_state', 'POOR')})
+- Current Telemetry Metrics: {json.dumps(telemetry.get('current_metrics', {}))}"""
+        else:
+            telemetry_truth = f"""LIVE SERVER TELEMETRY (ALL METRICS NOMINAL, NO ACTIVE INCIDENT BREACH):
+- Target Server: {target_sid} ({srv_name})
+- Operational Status: {telemetry.get('current_status', 'NORMAL')} (Health State: {telemetry.get('current_health_state', 'GOOD')})
+- Real-Time Observed Metrics: {json.dumps(telemetry.get('current_metrics', {}))}
+- Incident Status: No active threshold breach on this node."""
+
+        return f"""You are VYTRON's AI IT Support Assistant, an expert SRE and Infrastructure Incident Specialist for a 5-server enterprise fleet (APP-01, DB-01, AUTH-01, BACKUP-01, NETWORK-01).
+Answer the IT Manager's question using ONLY the ground truth telemetry and retrieved documentation chunks below.
+
+{telemetry_truth}
+
+RETRIEVED DOCUMENTATION CHUNKS (CHROMA DB COLLECTION 'vytron_troubleshooting_kb'):
+{doc_texts}
+
+PRIOR CONVERSATION:
 {hist_texts or "Start of conversation."}
+
+USER QUESTION: {query}
+
+STRICT ANTI-HALLUCINATION & FACTUAL ACCURACY RULES:
+1. Quote Exact Metrics: In Section 3 (Evidence from VYTRON), quote the exact observed value and threshold given in the ground truth above. Never round, guess, or invent numbers.
+2. If No Incident is Active: State clearly that the server is currently operating normally within its defined thresholds. Do NOT invent a fake incident or hallucinate a crash.
+3. Grounded Citations Only: In Section 7 (Retrieved Sources), ONLY cite titles from the RETRIEVED DOCUMENTATION CHUNKS above. Never invent external books, RFCs, or arbitrary URLs. If no chunks were retrieved, write '- General SRE Baseline Runbook'.
+4. Diagnostic Commands: Commands must be non-destructive, read-only inspection commands (e.g. pg_stat_activity, ping, traceroute, journalctl, top, ss, ethtool). Never recommend destructive commands (rm -rf, DROP TABLE, kill -9) without human operator verification.
+5. Structured 7-Section Response: Format your troubleshooting response strictly with these markdown headers:
+### 1. Understanding the Issue
+### 2. Possible Root Causes
+### 3. Evidence from VYTRON
+### 4. Recommended Investigation Steps
+### 5. Suggested Remediation
+### 6. Prevention Measures
+### 7. Retrieved Sources
 """
+
+    def _verify_and_guard_response(
+        self,
+        llm_text: str,
+        incident: Optional[dict[str, Any]],
+        telemetry: dict[str, Any],
+        chunks: list[dict[str, Any]]
+    ) -> str:
+        """
+        Anti-hallucination post-processor:
+        1. Scrubs sensitive credentials.
+        2. Ensures exact metric consistency if incident was active.
+        3. Validates that Section 7 cites actual ChromaDB sources.
+        """
+        scrubbed = re.sub(r"super_secret_pg_master_password", "[REDACTED_SECRET]", llm_text)
+        scrubbed = re.sub(r"eyjhbgcioijiuzi1niisinr5cci6ikpxvcj9", "[REDACTED_TOKEN]", scrubbed)
+        scrubbed = re.sub(r"private_cisco_community_string", "[REDACTED_COMMUNITY]", scrubbed)
+
+        if incident:
+            obs_val = str(incident.get("observed_value", ""))
+            sid = incident.get("server_id", "")
+            if obs_val and obs_val not in scrubbed:
+                metric_name = incident.get("metric_name") or incident.get("metric_key", "")
+                unit = incident.get("unit", "")
+                evidence_patch = (
+                    f"\n\n**[Canonical Ground Truth Telemetry Verified by VYTRON Sensor]**\n"
+                    f"- Server: {sid}\n"
+                    f"- Metric: {metric_name}\n"
+                    f"- Observed Value: {obs_val} {unit}\n"
+                    f"- Threshold: {incident.get('threshold_value')} {unit}\n"
+                    f"- Status: {telemetry.get('current_status', 'CRITICAL')}"
+                )
+                if "### 3. Evidence from VYTRON" in scrubbed:
+                    scrubbed = scrubbed.replace("### 3. Evidence from VYTRON", f"### 3. Evidence from VYTRON{evidence_patch}")
+
+        if chunks and "### 7. Retrieved Sources" in scrubbed:
+            verified_sources = []
+            for c in chunks:
+                m = c.get("metadata", {})
+                t = m.get("title") or m.get("doc_name") or "Technical Runbook"
+                sec = m.get("section") or "Diagnostics"
+                verified_sources.append(f"- **{t}** ({sec}) [ChromaDB Relevance: {c.get('relevance_score', 0.85):.2f}]")
+            sources_text = "\n".join(verified_sources)
+            parts = scrubbed.split("### 7. Retrieved Sources")
+            scrubbed = parts[0] + f"### 7. Retrieved Sources\n{sources_text}\n\n*(Remediation guidance is advisory. All commands must be reviewed and executed manually by the IT Operator; VYTRON never executes destructive commands automatically.)*"
+
+        return scrubbed
 
     def _synthesize_grounded_fallback(
         self,
@@ -732,11 +867,16 @@ async def process_chat_message(
         chat_sessions.update_incident_context(sid, incident_context)
     active_incident = chat_sessions.get_incident_context(sid)
 
-    # 3. Vector Retrieval (Source A)
-    retrieved_chunks = retrieve_knowledge(user_message, active_incident, n_results=4)
-
-    # 4. Live Telemetry Harvesting (Source B)
+    # 3. Live Telemetry Harvesting (Source B)
     live_telemetry = harvest_live_telemetry(active_incident, user_message, simulator_instance)
+
+    # Auto-resolve active incident from live simulator priority queue if not previously set
+    if not active_incident and live_telemetry.get("active_incidents_for_server"):
+        active_incident = live_telemetry["active_incidents_for_server"][0]
+        chat_sessions.update_incident_context(sid, active_incident)
+
+    # 4. Vector Retrieval (Source A)
+    retrieved_chunks = retrieve_knowledge(user_message, active_incident, n_results=4)
 
     # 5. Response Synthesis
     history = chat_sessions.get_history(sid)

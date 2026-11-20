@@ -9,6 +9,9 @@ import json
 import asyncio
 from typing import Set, Optional
 from contextlib import asynccontextmanager
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -254,9 +257,16 @@ async def api_chat(req: ChatRequest):
 def api_chat_health():
     """Reports status of chatbot service, ChromaDB vector store, and embedding engine."""
     store = get_vector_store()
+    gemini_key = os.getenv("GEMINI_API_KEY", "").strip("\"'")
+    masked_key = f"{gemini_key[:3]}***{gemini_key[-4:]}" if len(gemini_key) > 8 else ("Configured" if gemini_key else "Not set")
+    provider = os.getenv("LLM_PROVIDER", "gemini" if gemini_key else "fallback")
     return {
         "status": "healthy",
         "service": "VYTRON AI IT Support Assistant",
+        "llm_provider": provider,
+        "gemini_configured": bool(gemini_key),
+        "gemini_key_preview": masked_key,
+        "active_model": os.getenv("LLM_MODEL", "gemini-flash-lite-latest"),
         "vector_store": "connected",
         "collection": "vytron_troubleshooting_kb",
         "total_knowledge_chunks": store.collection.count() if store and store.collection else 0,

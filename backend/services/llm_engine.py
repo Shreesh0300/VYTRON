@@ -146,9 +146,80 @@ class GroundedFallbackProvider(LLMProvider):
         )
 
 
+class GeminiProvider(LLMProvider):
+    def __init__(self, api_key: Optional[str] = None, model: str = "gemini-flash-lite-latest"):
+        self.api_key = (api_key or os.getenv("GEMINI_API_KEY", "")).strip("\"'")
+        self.model = model
+
+    async def analyze(self, request: LLMAnalysisRequest) -> LLMAnalysisResponse:
+        if not self.api_key:
+            return GroundedFallbackProvider().analyze_sync(request)
+
+        prompt = self._build_prompt(request)
+        for m in [self.model, "gemini-3.5-flash-lite", "gemini-3.1-flash-lite"]:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{m}:generateContent?key={self.api_key}"
+            try:
+                async with httpx.AsyncClient(timeout=15.0) as client:
+                    res = await client.post(
+                        url,
+                        json={
+                            "contents": [{"parts": [{"text": prompt}]}],
+                            "generationConfig": {"responseMimeType": "application/json", "temperature": 0.1}
+                        }
+                    )
+                    if res.status_code == 200:
+                        text = res.json()["candidates"][0]["content"]["parts"][0]["text"]
+                        return self._parse_json_or_fallback(text, request.incident_id)
+            except Exception:
+                continue
+        return GroundedFallbackProvider().analyze_sync(request)
+
+    def _build_prompt(self, request: LLMAnalysisRequest) -> str:
+        return f"""You are an AIOps SRE incident investigator. Analyze this infrastructure incident evidence.
+Provide output ONLY in strict JSON format:
+{{
+  "summary": "1-2 sentence high-level summary of the root failure",
+  "contributing_factors": ["factor 1", "factor 2"],
+  "severity_rationale": "Reason for critical/warning severity based on evidence",
+  "confidence": "high|medium|low",
+  "recommended_steps": ["step 1", "step 2", "step 3"]
+}}
+
+EVIDENCE:
+Incident ID: {request.incident_id}
+Alerts: {json.dumps(request.alerts)}
+Servers Context: {json.dumps(request.server_info)}
+"""
+
+    def _parse_json_or_fallback(self, text: str, incident_id: str) -> LLMAnalysisResponse:
+        try:
+            start = text.find("{")
+            end = text.rfind("}") + 1
+            if start != -1 and end != -1:
+                data = json.loads(text[start:end])
+                return LLMAnalysisResponse(
+                    incident_id=incident_id,
+                    summary=data.get("summary", "Automated incident evaluation."),
+                    contributing_factors=data.get("contributing_factors", ["Resource contention"]),
+                    severity_rationale=data.get("severity_rationale", "Evidence indicates performance breach."),
+                    confidence=data.get("confidence", "high"),
+                    recommended_steps=data.get("recommended_steps", ["Review logs", "Scale resources"]),
+                    raw_response=text,
+                )
+        except Exception:
+            pass
+        return GroundedFallbackProvider().analyze_sync(
+            LLMAnalysisRequest(incident_id=incident_id, alerts=[], metrics_context=[])
+        )
+
+
 def get_llm_provider() -> LLMProvider:
+    from dotenv import load_dotenv
+    load_dotenv()
     provider_name = os.getenv("LLM_PROVIDER", "fallback").lower()
-    if provider_name == "ollama":
+    if provider_name == "gemini":
+        return GeminiProvider()
+    elif provider_name == "ollama":
         base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
         model = os.getenv("LLM_MODEL", "llama3.2")
         return OllamaProvider(base_url=base_url, model=model)
