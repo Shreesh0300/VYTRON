@@ -157,6 +157,29 @@ def get_incidents():
         "overview": snapshot["overview"],
     }
 
+# ── Egress Proof & Privacy Audit Endpoints ──────────────────────────────
+
+@app.get("/api/egress/stats")
+def read_egress_stats():
+    """Returns actual aggregated egress statistics from collector.db."""
+    from server.egress_service import get_egress_stats
+    return get_egress_stats()
+
+@app.get("/api/egress")
+def read_egress_records(limit: int = 50, filter_type: Optional[str] = None, server: Optional[str] = None):
+    """Returns actual payload audit records from collector.db."""
+    from server.egress_service import get_egress_records
+    return get_egress_records(limit=limit, filter_type=filter_type, server=server)
+
+@app.get("/api/egress/{payload_id}")
+def read_payload_detail(payload_id: str):
+    """Returns exact Before vs After comparison and serialized outgoing JSON."""
+    from server.egress_service import get_payload_detail
+    detail = get_payload_detail(payload_id)
+    if not detail:
+        raise HTTPException(status_code=404, detail=f"Payload {payload_id} not found in audit records")
+    return detail
+
 # ── WebSocket Telemetry ─────────────────────────────────────────────────
 
 @app.websocket("/ws")

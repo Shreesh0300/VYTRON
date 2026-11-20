@@ -27,7 +27,39 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Connect Real-Time WebSocket
   connectWebSocket();
+
+  // Check URL hash for tab navigation
+  if (window.location.hash === "#egress") {
+    switchDashboardTab("egress");
+  } else if (window.EgressApp) {
+    window.EgressApp.fetchStats();
+  }
 });
+
+window.switchDashboardTab = function(tabName) {
+  const viewMonitoring = document.getElementById("viewMonitoring");
+  const viewEgress = document.getElementById("viewEgress");
+  const controlBar = document.getElementById("controlBarContainer");
+  const tabMonitoring = document.getElementById("tabMonitoring");
+  const tabEgress = document.getElementById("tabEgress");
+
+  if (tabName === "egress") {
+    if (viewMonitoring) viewMonitoring.style.display = "none";
+    if (controlBar) controlBar.style.display = "none";
+    if (viewEgress) viewEgress.style.display = "block";
+    if (tabMonitoring) tabMonitoring.classList.remove("active");
+    if (tabEgress) tabEgress.classList.add("active");
+    window.location.hash = "egress";
+    if (window.EgressApp) window.EgressApp.init();
+  } else {
+    if (viewMonitoring) viewMonitoring.style.display = "block";
+    if (controlBar) controlBar.style.display = "block";
+    if (viewEgress) viewEgress.style.display = "none";
+    if (tabMonitoring) tabMonitoring.classList.add("active");
+    if (tabEgress) tabEgress.classList.remove("active");
+    window.location.hash = "monitoring";
+  }
+};
 
 function updateClock() {
   const clockEl = document.getElementById("clockDisplay");

@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VYTRON — Infrastructure Monitoring & Incident Prioritization</title>
+  <title>VYTRON — Autonomous Observability & Egress Proof Platform</title>
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/egress.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -22,9 +23,29 @@
       </div>
       <div>
         <h1 class="brand-title">VYTRON <span>AIOps</span></h1>
-        <p class="brand-subtitle">5-Server Infrastructure Monitoring & Incident Prioritization</p>
+        <p class="brand-subtitle">Autonomous Observability &amp; Privacy-First Egress Proof</p>
       </div>
     </div>
+
+    <!-- Top Navigation Tabs -->
+    <nav class="header-nav-tabs">
+      <button id="tabMonitoring" class="nav-tab-btn active" onclick="switchDashboardTab('monitoring')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+          <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+          <line x1="6" y1="6" x2="6.01" y2="6"></line>
+          <line x1="6" y1="18" x2="6.01" y2="18"></line>
+        </svg>
+        Infrastructure Monitoring
+      </button>
+      <button id="tabEgress" class="nav-tab-btn" onclick="switchDashboardTab('egress')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+        </svg>
+        Egress Proof &amp; Privacy Audit
+        <span class="badge-pill">Tier 1 Proof</span>
+      </button>
+    </nav>
 
     <div class="header-status-group">
       <div class="live-indicator" id="wsStatus">
@@ -35,8 +56,8 @@
     </div>
   </header>
 
-  <!-- Simulation Control Bar -->
-  <div class="control-bar-container">
+  <!-- Simulation Control Bar (Visible in Monitoring tab) -->
+  <div class="control-bar-container" id="controlBarContainer">
     <div class="control-bar">
       <div class="control-label-group">
         <span class="control-title">SIMULATION ENGINE:</span>
@@ -81,47 +102,394 @@
   </div>
 
   <main class="dashboard-main">
-    <!-- SECTION A: Overview -->
-    <section class="section-container" id="sectionOverview">
-      <div class="section-header">
-        <h2 class="section-title">SECTION A: SYSTEM OVERVIEW</h2>
-        <span class="section-meta">Live Cluster Health</span>
-      </div>
+    <!-- VIEW 1: Infrastructure Monitoring & Incident Prioritization -->
+    <div id="viewMonitoring">
+      <!-- SECTION A: Overview -->
+      <section class="section-container" id="sectionOverview">
+        <div class="section-header">
+          <h2 class="section-title">SECTION A: SYSTEM OVERVIEW</h2>
+          <span class="section-meta">Live Cluster Health</span>
+        </div>
 
-      <div class="overview-grid">
-        <!-- Card 1: Total Servers -->
-        <div class="stat-card">
-          <div class="stat-icon-wrap blue">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
-              <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
-              <line x1="6" y1="6" x2="6.01" y2="6"></line>
-              <line x1="6" y1="18" x2="6.01" y2="18"></line>
-            </svg>
+        <div class="overview-grid">
+          <!-- Card 1: Total Servers -->
+          <div class="stat-card">
+            <div class="stat-icon-wrap blue">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+                <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+                <line x1="6" y1="6" x2="6.01" y2="6"></line>
+                <line x1="6" y1="18" x2="6.01" y2="18"></line>
+              </svg>
+            </div>
+            <div class="stat-body">
+              <div class="stat-label">TOTAL SERVERS</div>
+              <div class="stat-value" id="statTotalServers">5</div>
+              <div class="stat-sub">Independent Nodes</div>
+            </div>
           </div>
-          <div class="stat-body">
-            <div class="stat-label">TOTAL SERVERS</div>
-            <div class="stat-value" id="statTotalServers">5</div>
-            <div class="stat-sub">Independent Nodes</div>
+
+          <!-- Card 2: Normal Servers -->
+          <div class="stat-card">
+            <div class="stat-icon-wrap green">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+            </div>
+            <div class="stat-body">
+              <div class="stat-label">NORMAL SERVERS</div>
+              <div class="stat-value text-green" id="statNormalServers">5</div>
+              <div class="stat-sub">Healthy & Baseline</div>
+            </div>
+          </div>
+
+          <!-- Card 3: Warning Servers -->
+          <div class="stat-card">
+            <div class="stat-icon-wrap amber">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+            </div>
+            <div class="stat-body">
+              <div class="stat-label">WARNING SERVERS</div>
+              <div class="stat-value text-amber" id="statWarningServers">0</div>
+              <div class="stat-sub">Threshold Elevated</div>
+            </div>
+          </div>
+
+          <!-- Card 4: Critical Servers -->
+          <div class="stat-card">
+            <div class="stat-icon-wrap red">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+            </div>
+            <div class="stat-body">
+              <div class="stat-label">CRITICAL SERVERS</div>
+              <div class="stat-value text-red" id="statCriticalServers">0</div>
+              <div class="stat-sub">Breach in Progress</div>
+            </div>
+          </div>
+
+          <!-- Card 5: Highest Priority Incident -->
+          <div class="stat-card">
+            <div class="stat-icon-wrap purple">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+              </svg>
+            </div>
+            <div class="stat-body">
+              <div class="stat-label">ACTIVE INCIDENTS / PRIORITY</div>
+              <div class="stat-value-group">
+                <span class="stat-value text-cyan" id="statActiveIncidents">0</span>
+                <span class="priority-badge-lg p-none" id="statHighestPriorityBadge">NONE</span>
+              </div>
+              <div class="stat-sub" id="statHighestPriorityDesc">Cluster Stable</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION B: Server Monitoring -->
+      <section class="section-container" id="sectionServers" style="margin-top:24px;">
+        <div class="section-header">
+          <h2 class="section-title">SECTION B: SERVER MONITORING (5 SERVERS)</h2>
+          <span class="section-meta">Click any server card below to view real-time diagnostics & charts</span>
+        </div>
+
+        <!-- 5 Dynamic Server Cards -->
+        <div class="servers-grid" id="serversCardsGrid"></div>
+
+        <!-- Detailed Server Diagnostics & Visual Charts -->
+        <div class="server-detail-panel" id="serverDetailPanel">
+          <div class="detail-panel-header">
+            <div class="server-title-group">
+              <span class="server-badge" id="detailServerId">APP-01</span>
+              <h3 class="server-title" id="detailServerName">Application Server</h3>
+              <span class="server-type-pill" id="detailServerType">Application</span>
+              <span class="status-pill status-normal" id="detailServerStatus">NORMAL</span>
+            </div>
+            <div class="server-meta-group">
+              <span class="meta-label">ROLE: <strong id="detailServerRole">Main application processing</strong></span>
+              <span class="meta-separator">•</span>
+              <span class="meta-label">UPTIME: <strong id="detailServerUptime">00h 00m 00s</strong></span>
+            </div>
+          </div>
+
+          <!-- 4 Metric Cards for Selected Server -->
+          <div class="metric-parameters-grid" id="detailParametersGrid"></div>
+
+          <!-- 4 Line Charts with Threshold Lines -->
+          <div class="charts-grid" id="detailChartsGrid">
+            <div class="chart-box">
+              <div class="chart-header">
+                <span class="chart-title" id="chart1Title">Metric 1</span>
+                <div class="chart-legend">
+                  <span class="legend-item"><span class="legend-line telemetry"></span> Value</span>
+                  <span class="legend-item"><span class="legend-line warning"></span> Warning</span>
+                  <span class="legend-item"><span class="legend-line critical"></span> Critical</span>
+                </div>
+              </div>
+              <div class="chart-canvas-container">
+                <canvas id="chartCanvas1"></canvas>
+              </div>
+            </div>
+
+            <div class="chart-box">
+              <div class="chart-header">
+                <span class="chart-title" id="chart2Title">Metric 2</span>
+                <div class="chart-legend">
+                  <span class="legend-item"><span class="legend-line telemetry"></span> Value</span>
+                  <span class="legend-item"><span class="legend-line warning"></span> Warning</span>
+                  <span class="legend-item"><span class="legend-line critical"></span> Critical</span>
+                </div>
+              </div>
+              <div class="chart-canvas-container">
+                <canvas id="chartCanvas2"></canvas>
+              </div>
+            </div>
+
+            <div class="chart-box">
+              <div class="chart-header">
+                <span class="chart-title" id="chart3Title">Metric 3</span>
+                <div class="chart-legend">
+                  <span class="legend-item"><span class="legend-line telemetry"></span> Value</span>
+                  <span class="legend-item"><span class="legend-line warning"></span> Warning</span>
+                  <span class="legend-item"><span class="legend-line critical"></span> Critical</span>
+                </div>
+              </div>
+              <div class="chart-canvas-container">
+                <canvas id="chartCanvas3"></canvas>
+              </div>
+            </div>
+
+            <div class="chart-box">
+              <div class="chart-header">
+                <span class="chart-title" id="chart4Title">Metric 4</span>
+                <div class="chart-legend">
+                  <span class="legend-item"><span class="legend-line telemetry"></span> Value</span>
+                  <span class="legend-item"><span class="legend-line warning"></span> Warning</span>
+                  <span class="legend-item"><span class="legend-line critical"></span> Critical</span>
+                </div>
+              </div>
+              <div class="chart-canvas-container">
+                <canvas id="chartCanvas4"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Lower Dual Split: SECTION C & SECTION D -->
+      <div class="lower-sections-split" style="margin-top:24px;">
+        <!-- SECTION C: Notifications -->
+        <section class="section-container split-left" id="sectionNotifications">
+          <div class="section-header">
+            <div class="header-left">
+              <h2 class="section-title">SECTION C: INCIDENT NOTIFICATIONS</h2>
+              <span class="section-badge" id="notificationsCountBadge">0 alerts</span>
+            </div>
+            <span class="section-hint">Click any row for diagnostic details & actions</span>
+          </div>
+
+          <div class="notifications-table-container">
+            <table class="data-table" id="notificationsTable">
+              <thead>
+                <tr>
+                  <th>Incident ID</th>
+                  <th>Time</th>
+                  <th>Server</th>
+                  <th>Issue / Breach Description</th>
+                  <th>Priority</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="notificationsTbody">
+                <tr>
+                  <td colspan="6" class="empty-state">No incidents detected. All 5 servers operating within normal thresholds.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- SECTION D: Priority Queue -->
+        <section class="section-container split-right" id="sectionPriorityQueue">
+          <div class="section-header">
+            <div class="header-left">
+              <h2 class="section-title">SECTION D: INCIDENT PRIORITY QUEUE</h2>
+              <span class="section-badge" id="queueCountBadge">0 active</span>
+            </div>
+            <span class="section-hint">Strict P1 &gt; P2 &gt; P3 &gt; P4 Prioritization</span>
+          </div>
+
+          <div class="priority-queue-list" id="priorityQueueList">
+            <div class="empty-state-queue">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M8 12l2 2 4-4"></path>
+              </svg>
+              <p>Queue is empty — No active unresolved incidents.</p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- VIEW 2: Egress Proof & Privacy Audit (Dedicated Enterprise Dashboard) -->
+    <div id="viewEgress" style="display:none;">
+      <!-- 1. Visual Data Flow Pipeline -->
+      <section class="data-flow-container">
+        <div class="data-flow-header">
+          <div class="data-flow-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2.2">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+            <span>PRIVACY-PRESERVING ARCHITECTURE — DATA FLOW PIPELINE</span>
+          </div>
+          <div class="trust-boundary-banner">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+            <span>TIER 1 TRUST BOUNDARY — ZERO RAW SECRETS TRANSMITTED</span>
           </div>
         </div>
 
-        <!-- Card 2: Normal Servers -->
+        <div class="flow-nodes-wrapper">
+          <!-- Node 1: Monitored Server -->
+          <div class="flow-node-card">
+            <div class="flow-node-top">
+              <div class="node-icon-box purple">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="2" y="2" width="20" height="8" rx="2"></rect>
+                  <rect x="2" y="14" width="20" height="8" rx="2"></rect>
+                  <line x1="6" y1="6" x2="6.01" y2="6"></line>
+                  <line x1="6" y1="18" x2="6.01" y2="18"></line>
+                </svg>
+              </div>
+              <span class="node-tier-tag">SOURCE</span>
+            </div>
+            <div class="node-title">1. Monitored Server</div>
+            <div class="node-desc">Emits raw telemetry, application queries, & unredacted debug metadata.</div>
+            <span class="node-chip cyan">Raw Ingestion</span>
+          </div>
+
+          <!-- Connector 1 -->
+          <div class="flow-connector">
+            <div class="connector-line"></div>
+          </div>
+
+          <!-- Node 2: Local Collector -->
+          <div class="flow-node-card">
+            <div class="flow-node-top">
+              <div class="node-icon-box blue">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                  <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                  <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                </svg>
+              </div>
+              <span class="node-tier-tag">TIER 1 LOCAL</span>
+            </div>
+            <div class="node-title">2. Local Collector</div>
+            <div class="node-desc">Buffers events in SQLite (collector.db) with local forensics audit trail.</div>
+            <span class="node-chip blue">Customer VPC</span>
+          </div>
+
+          <!-- Connector 2 -->
+          <div class="flow-connector">
+            <div class="connector-line"></div>
+          </div>
+
+          <!-- Node 3: Privacy Filter -->
+          <div class="flow-node-card highlight-privacy">
+            <div class="flow-node-top">
+              <div class="node-icon-box cyan">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+              </div>
+              <span class="node-tier-tag" style="color:#06b6d4; font-weight:800;">ENFORCEMENT</span>
+            </div>
+            <div class="node-title">3. Privacy Filter</div>
+            <div class="node-desc">Strips blocked keys, redacts passwords & API keys, enforces explicit allow-list.</div>
+            <span class="node-chip green">Allow-List Policy</span>
+          </div>
+
+          <!-- Connector 3 (Trust Boundary Crossing) -->
+          <div class="flow-connector boundary">
+            <div class="connector-line" style="background: linear-gradient(90deg, #06b6d4, #10b981);"></div>
+            <span class="boundary-label">EGRESS BOUNDARY</span>
+          </div>
+
+          <!-- Node 4: Central Platform -->
+          <div class="flow-node-card highlight-saas">
+            <div class="flow-node-top">
+              <div class="node-icon-box green">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                  <polyline points="2 17 12 22 22 17"></polyline>
+                  <polyline points="2 12 12 17 22 12"></polyline>
+                </svg>
+              </div>
+              <span class="node-tier-tag">TIER 2 SAAS</span>
+            </div>
+            <div class="node-title">4. Central Platform</div>
+            <div class="node-desc">Receives only approved operational metadata. Zero secrets stored or exposed.</div>
+            <span class="node-chip green">Approved Telemetry</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. Egress Statistics Cards (Live data from collector.db) -->
+      <div class="egress-stats-grid">
         <div class="stat-card">
           <div class="stat-icon-wrap green">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
           </div>
           <div class="stat-body">
-            <div class="stat-label">NORMAL SERVERS</div>
-            <div class="stat-value text-green" id="statNormalServers">5</div>
-            <div class="stat-sub">Healthy & Baseline</div>
+            <div class="stat-label">PAYLOADS SENT (DELIVERED)</div>
+            <div class="stat-value text-green" id="statEgressSent">--</div>
+            <div class="stat-sub">Transmitted to Central SaaS</div>
           </div>
         </div>
 
-        <!-- Card 3: Warning Servers -->
+        <div class="stat-card">
+          <div class="stat-icon-wrap red">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="15" y1="9" x2="9" y2="15"></line>
+              <line x1="9" y1="9" x2="15" y2="15"></line>
+            </svg>
+          </div>
+          <div class="stat-body">
+            <div class="stat-label">SENSITIVE FIELDS BLOCKED</div>
+            <div class="stat-value text-red" id="statEgressBlocked">--</div>
+            <div class="stat-sub">Stripped by Privacy Filter</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon-wrap blue">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+          </div>
+          <div class="stat-body">
+            <div class="stat-label">PENDING TRANSFERS</div>
+            <div class="stat-value text-cyan" id="statEgressPending">--</div>
+            <div class="stat-sub">Buffered in Egress Queue</div>
+          </div>
+        </div>
+
         <div class="stat-card">
           <div class="stat-icon-wrap amber">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -131,192 +499,122 @@
             </svg>
           </div>
           <div class="stat-body">
-            <div class="stat-label">WARNING SERVERS</div>
-            <div class="stat-value text-amber" id="statWarningServers">0</div>
-            <div class="stat-sub">Threshold Elevated</div>
-          </div>
-        </div>
-
-        <!-- Card 4: Critical Servers -->
-        <div class="stat-card">
-          <div class="stat-icon-wrap red">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="12" y1="8" x2="12" y2="12"></line>
-              <line x1="12" y1="16" x2="12.01" y2="16"></line>
-            </svg>
-          </div>
-          <div class="stat-body">
-            <div class="stat-label">CRITICAL SERVERS</div>
-            <div class="stat-value text-red" id="statCriticalServers">0</div>
-            <div class="stat-sub">Breach in Progress</div>
-          </div>
-        </div>
-
-        <!-- Card 5: Highest Priority Incident -->
-        <div class="stat-card">
-          <div class="stat-icon-wrap purple">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-            </svg>
-          </div>
-          <div class="stat-body">
-            <div class="stat-label">ACTIVE INCIDENTS / PRIORITY</div>
-            <div class="stat-value-group">
-              <span class="stat-value text-cyan" id="statActiveIncidents">0</span>
-              <span class="priority-badge-lg p-none" id="statHighestPriorityBadge">NONE</span>
-            </div>
-            <div class="stat-sub" id="statHighestPriorityDesc">Cluster Stable</div>
+            <div class="stat-label">FAILED TRANSFERS</div>
+            <div class="stat-value text-amber" id="statEgressFailed">--</div>
+            <div class="stat-sub">Circuit Breaker & Backoff</div>
           </div>
         </div>
       </div>
-    </section>
 
-    <!-- SECTION B: Server Monitoring -->
-    <section class="section-container" id="sectionServers">
-      <div class="section-header">
-        <h2 class="section-title">SECTION B: SERVER MONITORING (5 SERVERS)</h2>
-        <span class="section-meta">Click any server card below to view real-time diagnostics & charts</span>
-      </div>
-
-      <!-- 5 Dynamic Server Cards -->
-      <div class="servers-grid" id="serversCardsGrid">
-        <!-- Rendered dynamically by app.js -->
-      </div>
-
-      <!-- Detailed Server Diagnostics & Visual Charts -->
-      <div class="server-detail-panel" id="serverDetailPanel">
-        <div class="detail-panel-header">
-          <div class="server-title-group">
-            <span class="server-badge" id="detailServerId">APP-01</span>
-            <h3 class="server-title" id="detailServerName">Application Server</h3>
-            <span class="server-type-pill" id="detailServerType">Application</span>
-            <span class="status-pill status-normal" id="detailServerStatus">NORMAL</span>
-          </div>
-          <div class="server-meta-group">
-            <span class="meta-label">ROLE: <strong id="detailServerRole">Main application processing</strong></span>
-            <span class="meta-separator">•</span>
-            <span class="meta-label">UPTIME: <strong id="detailServerUptime">00h 00m 00s</strong></span>
-          </div>
-        </div>
-
-        <!-- 4 Metric Cards for Selected Server -->
-        <div class="metric-parameters-grid" id="detailParametersGrid">
-          <!-- Rendered dynamically -->
-        </div>
-
-        <!-- 4 Line Charts with Threshold Lines -->
-        <div class="charts-grid" id="detailChartsGrid">
-          <div class="chart-box">
-            <div class="chart-header">
-              <span class="chart-title" id="chart1Title">Metric 1</span>
-              <div class="chart-legend">
-                <span class="legend-item"><span class="legend-line telemetry"></span> Value</span>
-                <span class="legend-item"><span class="legend-line warning"></span> Warning</span>
-                <span class="legend-item"><span class="legend-line critical"></span> Critical</span>
+      <!-- 3. Before vs After Filtering Comparison Panel -->
+      <section class="comparison-panel">
+        <div class="comparison-header">
+          <div class="comparison-target-info">
+            <span class="server-badge" id="compServerId">AUTH-01</span>
+            <div>
+              <span class="target-payload-id" id="compPayloadId">PAYLOAD-79C97BB966F6</span>
+              <div style="font-size:11px; color:var(--text-dim); margin-top:2px;">
+                STATUS: <strong id="compDeliveryStatus" style="color:#f87171;">FAILED</strong> • 
+                TIMESTAMP: <span id="compTimestamp" style="font-family:var(--font-mono);">--:--:--</span>
               </div>
             </div>
-            <div class="chart-canvas-container">
-              <canvas id="chartCanvas1"></canvas>
-            </div>
           </div>
-
-          <div class="chart-box">
-            <div class="chart-header">
-              <span class="chart-title" id="chart2Title">Metric 2</span>
-              <div class="chart-legend">
-                <span class="legend-item"><span class="legend-line telemetry"></span> Value</span>
-                <span class="legend-item"><span class="legend-line warning"></span> Warning</span>
-                <span class="legend-item"><span class="legend-line critical"></span> Critical</span>
-              </div>
-            </div>
-            <div class="chart-canvas-container">
-              <canvas id="chartCanvas2"></canvas>
-            </div>
-          </div>
-
-          <div class="chart-box">
-            <div class="chart-header">
-              <span class="chart-title" id="chart3Title">Metric 3</span>
-              <div class="chart-legend">
-                <span class="legend-item"><span class="legend-line telemetry"></span> Value</span>
-                <span class="legend-item"><span class="legend-line warning"></span> Warning</span>
-                <span class="legend-item"><span class="legend-line critical"></span> Critical</span>
-              </div>
-            </div>
-            <div class="chart-canvas-container">
-              <canvas id="chartCanvas3"></canvas>
-            </div>
-          </div>
-
-          <div class="chart-box">
-            <div class="chart-header">
-              <span class="chart-title" id="chart4Title">Metric 4</span>
-              <div class="chart-legend">
-                <span class="legend-item"><span class="legend-line telemetry"></span> Value</span>
-                <span class="legend-item"><span class="legend-line warning"></span> Warning</span>
-                <span class="legend-item"><span class="legend-line critical"></span> Critical</span>
-              </div>
-            </div>
-            <div class="chart-canvas-container">
-              <canvas id="chartCanvas4"></canvas>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Lower Dual Split: SECTION C & SECTION D -->
-    <div class="lower-sections-split">
-      <!-- SECTION C: Notifications -->
-      <section class="section-container split-left" id="sectionNotifications">
-        <div class="section-header">
-          <div class="header-left">
-            <h2 class="section-title">SECTION C: INCIDENT NOTIFICATIONS</h2>
-            <span class="section-badge" id="notificationsCountBadge">0 alerts</span>
-          </div>
-          <span class="section-hint">Click any row for diagnostic details & actions</span>
+          <span class="policy-badge redacted" id="compPolicyBadge">REDACTED (4 SENSITIVE FIELDS STRIPPED)</span>
         </div>
 
-        <div class="notifications-table-container">
-          <table class="data-table" id="notificationsTable">
-            <thead>
-              <tr>
-                <th>Incident ID</th>
-                <th>Time</th>
-                <th>Server</th>
-                <th>Issue / Breach Description</th>
-                <th>Priority</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody id="notificationsTbody">
-              <tr>
-                <td colspan="6" class="empty-state">No incidents detected. All 5 servers operating within normal thresholds.</td>
-              </tr>
-            </tbody>
-          </table>
+        <!-- Field-by-Field Privacy Audit Chips Bar -->
+        <div class="field-chips-bar" id="compFieldChipsBar">
+          <!-- Rendered dynamically: Green for Allowed, Red for Blocked -->
+        </div>
+
+        <!-- Dual Code Comparison Panes -->
+        <div class="code-comparison-grid">
+          <!-- Left Pane: BEFORE -->
+          <div class="code-pane">
+            <div class="code-pane-header">
+              <div class="code-pane-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+                <span>BEFORE — Raw Telemetry (Pre-Filter at Local Ingest)</span>
+              </div>
+              <span class="pane-badge pre">Raw Ingest</span>
+            </div>
+            <div class="code-viewer-body" id="egressViewerBefore">// Loading raw ingest payload...</div>
+          </div>
+
+          <!-- Right Pane: AFTER -->
+          <div class="code-pane">
+            <div class="code-pane-header">
+              <div class="code-pane-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>AFTER — Exact Approved Outgoing Payload (Post-Filter)</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span class="pane-badge post">Approved Egress</span>
+                <button class="copy-json-btn" id="btnCopyOutgoingJson">Copy JSON</button>
+              </div>
+            </div>
+            <div class="code-viewer-body" id="egressViewerAfter">// Loading serialized outgoing payload...</div>
+          </div>
         </div>
       </section>
 
-      <!-- SECTION D: Priority Queue -->
-      <section class="section-container split-right" id="sectionPriorityQueue">
+      <!-- 4. Detailed Payload Audit Table -->
+      <section class="section-container">
         <div class="section-header">
           <div class="header-left">
-            <h2 class="section-title">SECTION D: INCIDENT PRIORITY QUEUE</h2>
-            <span class="section-badge" id="queueCountBadge">0 active</span>
+            <h2 class="section-title">PAYLOAD EGRESS AUDIT TRAIL (collector.db)</h2>
+            <span class="section-badge" id="egressRecordsCountBadge">Loading audits...</span>
           </div>
-          <span class="section-hint">Strict P1 &gt; P2 &gt; P3 &gt; P4 Prioritization</span>
+          <span class="section-hint">Click any payload row to inspect its exact Before vs After filtering proof</span>
         </div>
 
-        <div class="priority-queue-list" id="priorityQueueList">
-          <div class="empty-state-queue">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <circle cx="12" cy="12" r="10"></circle>
-              <path d="M8 12l2 2 4-4"></path>
+        <!-- Filter Bar -->
+        <div class="table-filter-bar">
+          <div class="search-input-wrap">
+            <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
-            <p>Queue is empty — No active unresolved incidents.</p>
+            <input type="text" id="egressSearchInput" placeholder="Search by Payload ID or Server...">
           </div>
+
+          <div class="filter-selects-group">
+            <select id="egressPolicyFilter">
+              <option value="all">All Policy Decisions</option>
+              <option value="redacted">Redacted / Scrubbed Only (Privacy Proof)</option>
+              <option value="approved">Approved Clean Only</option>
+            </select>
+
+            <select id="egressServerFilter">
+              <option value="ALL">All Monitored Servers</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="notifications-table-container" style="max-height: 480px;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Payload ID</th>
+                <th>Server</th>
+                <th>Policy Decision</th>
+                <th>Allowed Fields</th>
+                <th>Blocked / Scrubbed</th>
+                <th>Delivery Status</th>
+                <th>Timestamp</th>
+              </tr>
+            </thead>
+            <tbody id="egressAuditTbody">
+              <tr>
+                <td colspan="7" class="empty-state">Loading egress records from collector database...</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </section>
     </div>
@@ -398,5 +696,6 @@
   <script src="js/charts.js"></script>
   <script src="js/modal.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/egress.js"></script>
 </body>
 </html>
