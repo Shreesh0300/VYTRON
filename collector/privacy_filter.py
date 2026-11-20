@@ -52,6 +52,23 @@ def sanitize_dict(d: dict) -> tuple[dict, list[str]]:
             sub_clean, sub_blocked = sanitize_dict(v)
             sanitized[k] = sub_clean
             blocked_keys.extend([f"metadata.{k}.{sk}" for sk in sub_blocked])
+        elif isinstance(v, list):
+            clean_list = []
+            for idx, item in enumerate(v):
+                if isinstance(item, str):
+                    c_item, was_redacted = redact_string(item)
+                    if was_redacted:
+                        blocked_keys.append(f"metadata.{k}[{idx}]:secret_scrubbed")
+                    clean_list.append(c_item)
+                elif isinstance(item, dict):
+                    c_dict, sub_blocked = sanitize_dict(item)
+                    clean_list.append(c_dict)
+                    for sk in sub_blocked:
+                        prefix = f"metadata.{k}[{idx}]"
+                        blocked_keys.append(f"{prefix}.{sk.split('.', 1)[-1]}" if "." in sk else f"{prefix}.{sk}")
+                else:
+                    clean_list.append(item)
+            sanitized[k] = clean_list
         else:
             sanitized[k] = v
             

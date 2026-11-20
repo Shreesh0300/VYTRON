@@ -39,7 +39,15 @@ function viewEgressDetail(index) {
   // Show JSON
   const viewer = document.getElementById("egress-json-viewer");
   if (viewer) {
-    viewer.innerText = JSON.stringify(item, null, 2);
+    if (item.serialized_payload) {
+      try {
+        viewer.innerText = JSON.stringify(JSON.parse(item.serialized_payload), null, 2);
+      } catch (e) {
+        viewer.innerText = item.serialized_payload;
+      }
+    } else {
+      viewer.innerText = JSON.stringify(item, null, 2);
+    }
   }
 }
 

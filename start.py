@@ -52,6 +52,9 @@ def start_services():
     print(f"{BOLD}║    VYTRON — Autonomous Observability Platform    ║{RESET}")
     print(f"{BOLD}╚══════════════════════════════════════════════════╝{RESET}\n")
 
+    logs_dir = os.path.join(ROOT, "logs")
+    os.makedirs(logs_dir, exist_ok=True)
+
     # Start backend, then simulator, then collector
     for svc in SERVICES:
         cmd = [
@@ -61,12 +64,14 @@ def start_services():
             "--port", str(svc["port"]),
             "--log-level", "info",
         ]
-        print(f"{svc['color']}▶ Starting {svc['name']} on port {svc['port']}...{RESET}")
+        log_file_path = os.path.join(logs_dir, f"{svc['name'].lower().replace(' ', '_')}.log")
+        log_file = open(log_file_path, "a", encoding="utf-8")
+        print(f"{svc['color']}▶ Starting {svc['name']} on port {svc['port']} (logs: logs/{os.path.basename(log_file_path)})...{RESET}")
         proc = subprocess.Popen(
             cmd,
             cwd=ROOT,
             env=env,
-            stdout=subprocess.PIPE,
+            stdout=log_file,
             stderr=subprocess.STDOUT,
         )
         processes.append((svc, proc))
@@ -79,12 +84,14 @@ def start_services():
         "--directory", frontend_dir,
         "--bind", "0.0.0.0",
     ]
-    print(f"\033[95m▶ Starting Frontend on port 5500...{RESET}")
+    fe_log_path = os.path.join(logs_dir, "frontend.log")
+    fe_log = open(fe_log_path, "a", encoding="utf-8")
+    print(f"\033[95m▶ Starting Frontend on port 5500 (logs: logs/frontend.log)...{RESET}")
     frontend_proc = subprocess.Popen(
         frontend_cmd,
         cwd=frontend_dir,
         env=env,
-        stdout=subprocess.PIPE,
+        stdout=fe_log,
         stderr=subprocess.STDOUT,
     )
     processes.append(({"name": "Frontend", "port": 5500, "color": "\033[95m"}, frontend_proc))

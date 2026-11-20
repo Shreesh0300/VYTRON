@@ -15,6 +15,18 @@ async def generate_recommendations(incident: Incident, db: Session) -> list[Reco
     Synthesizes alert evidence, queries LLM analysis provider,
     and records concrete recommendations with audit logging.
     """
+    # Guard: Check if this incident already has active pending recommendations
+    existing_pending = (
+        db.query(Recommendation)
+        .filter(
+            Recommendation.incident_id == incident.incident_id,
+            Recommendation.approval_status == "pending",
+        )
+        .count()
+    )
+    if existing_pending > 0:
+        return []
+
     now_str = datetime.now(timezone.utc).isoformat()
 
     # Query linked alerts

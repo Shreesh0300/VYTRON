@@ -34,8 +34,8 @@ async def collector_offline_monitor_task():
     Detects offline state within 60s target SLA and logs audit event.
     """
     while True:
+        db = SessionLocal()
         try:
-            db = SessionLocal()
             now = datetime.now(timezone.utc)
             collectors = db.query(Collector).all()
             for c in collectors:
@@ -58,9 +58,10 @@ async def collector_offline_monitor_task():
                     )
                     db.add(audit)
                     db.commit()
-            db.close()
         except Exception:
             pass
+        finally:
+            db.close()
         await asyncio.sleep(15.0)
 
 

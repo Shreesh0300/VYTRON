@@ -5,7 +5,7 @@ Guarantees zero data loss and exact delivery during Central Platform outages.
 """
 import json
 import asyncio
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import httpx
 from collector.models import EgressQueue, TransferAudit
 from collector.database import SessionLocal
@@ -32,6 +32,25 @@ async def drain_queue(client: httpx.AsyncClient):
     """
     db = SessionLocal()
     try:
+        now_dt = datetime.now(timezone.utc)
+        now_iso = now_dt.isoformat()
+
+        # 1. Recover stale in_progress items from unexpected worker crashes (>30s old)
+        stale_cutoff = (now_dt - timedelta(seconds=30)).isoformat()
+        stale_items = (
+            db.query(EgressQueue)
+            .filter(
+                EgressQueue.delivery_status == "in_progress",
+                EgressQueue.last_attempt_at < stale_cutoff,
+            )
+            .all()
+        )
+        for s in stale_items:
+            s.delivery_status = "retryable"
+        if stale_items:
+            db.commit()
+
+        # 2. Query pending and retryable payloads
         items = (
             db.query(EgressQueue)
             .filter(EgressQueue.delivery_status.in_(["pending", "retryable"]))
@@ -50,7 +69,21 @@ async def drain_queue(client: httpx.AsyncClient):
         url = f"{CONFIG['backend_url']}/api/telemetry"
 
         for item in items:
-            now_iso = datetime.now(timezone.utc).isoformat()
+            # 3. Check exponential backoff delay for retryable items
+            if item.delivery_status == "retryable" and item.last_attempt_at:
+                try:
+                    last_attempt = datetime.fromisoformat(item.last_attempt_at)
+                    if last_attempt.tzinfo is None:
+                        last_attempt = last_attempt.replace(tzinfo=timezone.utc)
+                    delay = min(
+                        CONFIG["queue_retry_base_delay"] * (CONFIG["queue_backoff_multiplier"] ** item.retry_count),
+                        CONFIG["queue_retry_max_delay"],
+                    )
+                    if (now_dt - last_attempt).total_seconds() < delay:
+                        continue  # Backoff delay has not elapsed yet
+                except Exception:
+                    pass
+
             item.delivery_status = "in_progress"
             item.last_attempt_at = now_iso
             db.commit()

@@ -94,6 +94,14 @@
   background-color: rgba(255, 255, 255, 0.02);
 }
 
+.selected-row td {
+  background-color: rgba(59, 130, 246, 0.15) !important;
+}
+
+.selected-row {
+  border-left: 3px solid var(--accent-color);
+}
+
 /* Badges */
 .badge {
   display: inline-block;

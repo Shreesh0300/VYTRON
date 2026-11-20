@@ -18,6 +18,7 @@ def record_egress(session, egress_record: EgressRecord):
         blocked_fields=json.dumps(egress_record.blocked_fields),
         transmission_status=egress_record.transmission_status,
         timestamp=egress_record.timestamp.isoformat(),
+        serialized_payload=egress_record.serialized_payload,
     )
     session.add(entry)
     session.commit()
@@ -36,5 +37,6 @@ def get_egress_history(session, limit: int = 50) -> list[dict]:
             "blocked_fields": json.loads(r.blocked_fields) if r.blocked_fields else [],
             "transmission_status": r.transmission_status,
             "timestamp": r.timestamp,
+            "serialized_payload": r.serialized_payload,
         })
     return results

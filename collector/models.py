@@ -70,3 +70,4 @@ class TransferAudit(Base):
     blocked_fields = Column(Text, nullable=False)   # JSON array
     transmission_status = Column(String(50), default="queued")
     timestamp = Column(String(50), default=utc_now_str, index=True)
+    serialized_payload = Column(Text, nullable=True)  # Exact serialized JSON for Egress Proof
