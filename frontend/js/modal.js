@@ -146,6 +146,7 @@ const IncidentModal = {
       }
 
       const guidance = await res.json();
+      this.latestGuidance = guidance;
       this.renderAiGuidance(guidance);
     } catch (err) {
       console.error("Failed to run AI investigation:", err);
@@ -251,6 +252,26 @@ const IncidentModal = {
       </div>
     `;
 
+    // Format 7. Continue Conversation in IT Support Chatbot CTA
+    const chatbotCtaHtml = `
+      <div class="ai-card-section ai-chatbot-cta-box" style="border: 1px solid rgba(6, 182, 212, 0.4); background: rgba(6, 182, 212, 0.05); border-radius: 8px; padding: 16px; margin-top: 14px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;">
+          <div>
+            <div style="font-weight:700; color:#38bdf8; font-size:13px; margin-bottom:4px; display:flex; align-items:center; gap:6px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
+              <span>Interactive Incident Troubleshooting</span>
+            </div>
+            <div style="font-size:11px; color:var(--text-dim);">Continue deep-dive root cause analysis and ask follow-up questions in the dedicated IT Manager Support Chatbot.</div>
+          </div>
+          <button class="btn btn-primary btn-chat-redirect" style="background:#06b6d4; color:#0f172a; font-weight:700; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-size:12px; display:flex; align-items:center; gap:6px;" onclick="IncidentModal.openChatbot()">
+            Continue Conversation in IT Support Chatbot ➔
+          </button>
+        </div>
+      </div>
+    `;
+
     this.aiContent.innerHTML = `
       ${explanationHtml}
       ${causesHtml}
@@ -258,9 +279,40 @@ const IncidentModal = {
       ${stepsHtml}
       ${solutionsHtml}
       ${outcomeHtml}
+      ${chatbotCtaHtml}
     `;
 
     this.aiContent.style.display = "flex";
+  },
+
+  openChatbot() {
+    if (!this.currentIncident) return;
+    const chatContext = {
+      incident_id: this.currentIncident.incident_id,
+      server_id: this.currentIncident.server_id,
+      server_name: this.currentIncident.server_name,
+      server_type: this.currentIncident.server_type,
+      metric_name: this.currentIncident.metric_name || this.currentIncident.metric_key,
+      metric_key: this.currentIncident.metric_key,
+      observed_value: this.currentIncident.observed_value,
+      threshold_value: this.currentIncident.threshold_value,
+      severity: this.currentIncident.severity,
+      priority: this.currentIncident.priority,
+      created_at: this.currentIncident.created_at_str,
+      issue_description: this.currentIncident.issue_description,
+      recommended_action: this.currentIncident.recommended_action,
+      guidance: this.latestGuidance || null
+    };
+
+    try {
+      sessionStorage.setItem("vytron_chat_incident_context", JSON.stringify(chatContext));
+    } catch (e) {
+      console.warn("Could not save to sessionStorage:", e);
+    }
+
+    const incParam = encodeURIComponent(this.currentIncident.incident_id || "");
+    const srvParam = encodeURIComponent(this.currentIncident.server_id || "");
+    window.location.href = `chat.html?incident_id=${incParam}&server_id=${srvParam}`;
   },
 
   copyCommand(commandText, btnEl) {

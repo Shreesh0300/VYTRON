@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VYTRON — AI IT Manager Support Chatbot</title>
+  <link rel="stylesheet" href="css/style.css?v=2.4">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="chat-page-body">
+  <!-- Header -->
+  <header class="app-header chat-header">
+    <div class="brand-section">
+      <a href="index.html" class="brand-link" style="display:flex; align-items:center; gap:12px; text-decoration:none;">
+        <div class="brand-logo">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+            <polyline points="2 17 12 22 22 17"></polyline>
+            <polyline points="2 12 12 17 22 12"></polyline>
+          </svg>
+        </div>
+        <div>
+          <h1 class="brand-title">VYTRON <span>AI IT SUPPORT ASSISTANT</span></h1>
+          <p class="brand-subtitle">RAG-Grounded Infrastructure Incident & Operations Intelligence</p>
+        </div>
+      </a>
+    </div>
+
+    <div class="header-status-group">
+      <div class="live-indicator" id="aiHealthIndicator">
+        <span class="status-dot green"></span>
+        <span class="status-label" id="aiStatusText">AI Online (RAG Active)</span>
+      </div>
+      <a href="index.html" class="btn btn-sm btn-outline-cyan btn-back-dashboard">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+        Back to Dashboard
+      </a>
+    </div>
+  </header>
+
+  <!-- Incident Context Banner (Visible when opened from an Incident) -->
+  <div class="chat-incident-banner" id="chatIncidentBanner" style="display:none;">
+    <div class="incident-banner-content">
+      <div class="banner-badge-group">
+        <span class="prio-tag" id="bannerPriority">P1</span>
+        <span class="banner-inc-id" id="bannerIncidentId">INC-2026-XXXX</span>
+        <span class="banner-server" id="bannerServer">DB-01 (Database Server)</span>
+      </div>
+      <div class="banner-telemetry-summary">
+        <span>AFFECTED METRIC: <strong id="bannerMetric">Query Latency</strong></span>
+        <span>OBSERVED: <strong class="text-red" id="bannerObserved">145.2 ms</strong></span>
+        <span>THRESHOLD: <strong id="bannerThreshold">120.0 ms</strong></span>
+        <span>STATUS: <strong class="text-red" id="bannerSeverity">CRITICAL</strong></span>
+      </div>
+    </div>
+    <div class="banner-actions">
+      <button class="btn btn-xs btn-outline-warning" id="btnClearIncidentFilter" onclick="ChatApp.clearIncidentContext()" title="Switch to General IT Chat">
+        ✕ Clear Incident Context
+      </button>
+    </div>
+  </div>
+
+  <!-- Chatbot Main Workspace -->
+  <main class="chat-workspace">
+    <!-- Suggested Contextual Questions Bar -->
+    <div class="suggested-questions-panel">
+      <div class="suggestions-header">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+        <span>SUGGESTED INCIDENT QUESTIONS:</span>
+      </div>
+      <div class="suggestions-chips-wrap" id="suggestionsContainer">
+        <!-- Dynamically populated contextual chips -->
+      </div>
+    </div>
+
+    <!-- Scrollable Chat History Container -->
+    <div class="chat-messages-container" id="chatMessages">
+      <!-- Welcome Message -->
+      <div class="chat-bubble-row assistant-row">
+        <div class="avatar-badge assistant-avatar">AI</div>
+        <div class="chat-bubble-card assistant-bubble">
+          <div class="bubble-header">
+            <span class="bubble-sender">VYTRON AI IT Support Assistant</span>
+            <span class="bubble-time" id="welcomeTime">Just now</span>
+          </div>
+          <div class="bubble-body">
+            <p>Welcome! I am VYTRON's dedicated <strong>AI IT Support Assistant</strong>, specialized in infrastructure monitoring, incident diagnosis, root cause analysis, and operational runbook guidance.</p>
+            <p>I operate on a strict <strong>Zero-Knowledge RAG pipeline</strong> grounded directly in official documentation from ChromaDB (35,000+ chunks) and live telemetry from the VYTRON 5-server fleet.</p>
+            <p style="margin-top:8px; font-size:12px; color:var(--text-dim);"><em>Select one of the suggested questions above or type your infrastructure inquiry below to begin.</em></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Thinking / Loading Indicator -->
+    <div class="chat-thinking-indicator" id="chatThinking" style="display:none;">
+      <div class="avatar-badge assistant-avatar">AI</div>
+      <div class="thinking-bubble">
+        <div class="spin-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spin">
+            <circle cx="12" cy="12" r="10"></circle>
+          </svg>
+        </div>
+        <span id="thinkingText">Searching ChromaDB vector store & analyzing live telemetry...</span>
+      </div>
+    </div>
+
+    <!-- Chat Input Controls Area -->
+    <div class="chat-input-area">
+      <div class="input-wrapper">
+        <textarea
+          id="chatInputText"
+          class="chat-textarea"
+          placeholder="Ask an IT infrastructure question (e.g., 'What caused this query latency spike?', 'How do I investigate blocking locks?')..."
+          rows="1"
+        ></textarea>
+        <button id="btnSendChat" class="btn-send-message" title="Send (Enter)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </div>
+      <div class="input-meta-bar">
+        <div class="input-hints">
+          <span>Press <strong>Enter</strong> to send • <strong>Shift+Enter</strong> for newline</span>
+          <span class="meta-dot">•</span>
+          <span class="text-cyan">Strict IT-Only Scope Enforced</span>
+        </div>
+        <button id="btnClearChat" class="btn-clear-session" title="Clear current session conversation">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+          Clear Session
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Clear Confirmation Dialog Modal -->
+  <div class="modal-backdrop" id="clearConfirmModal" style="display:none;">
+    <div class="modal-card confirm-modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Clear Conversation History?</h3>
+      </div>
+      <div class="modal-body">
+        <p>This will erase your current chatbot conversation thread. Any active incident context will remain intact.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="btnCancelClear">Cancel</button>
+        <button class="btn btn-danger" id="btnConfirmClear">Clear History</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/chat.js?v=2.4"></script>
+</body>
+</html>

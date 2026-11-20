@@ -17,6 +17,7 @@ from pydantic import BaseModel
 
 from server.simulator import InfrastructureSimulator
 from server.rag.pipeline import troubleshoot_incident, get_vector_store
+from server.chatbot import process_chat_message, get_contextual_suggestions, chat_sessions
 
 # Global simulator instance
 simulator = InfrastructureSimulator()
@@ -88,6 +89,14 @@ class StartSimulationRequest(BaseModel):
 class TroubleshootRequest(BaseModel):
     incident_id: Optional[str] = None
     incident: Optional[dict] = None
+
+class ChatRequest(BaseModel):
+    message: str
+    session_id: Optional[str] = None
+    incident_context: Optional[dict] = None
+
+class ClearChatRequest(BaseModel):
+    session_id: str
 
 # ── API Endpoints ───────────────────────────────────────────────────────
 
@@ -223,6 +232,64 @@ def get_knowledge_sources():
         "total_chunks": store.collection.count(),
         "collection": "vytron_troubleshooting_kb"
     }
+
+# ── AI IT Manager Support Chatbot Endpoints ──────────────────────────────
+
+@app.post("/api/chat")
+async def api_chat(req: ChatRequest):
+    """
+    RAG-grounded AI IT Manager Support Chatbot:
+    Validates IT operations scope, retrieves relevant vector chunks,
+    integrates live simulator telemetry and generates structured troubleshooting guidance.
+    """
+    res = await process_chat_message(
+        user_message=req.message,
+        session_id=req.session_id,
+        incident_context=req.incident_context,
+        simulator_instance=simulator
+    )
+    return res
+
+@app.get("/api/chat/health")
+def api_chat_health():
+    """Reports status of chatbot service, ChromaDB vector store, and embedding engine."""
+    store = get_vector_store()
+    return {
+        "status": "healthy",
+        "service": "VYTRON AI IT Support Assistant",
+        "vector_store": "connected",
+        "collection": "vytron_troubleshooting_kb",
+        "total_knowledge_chunks": store.collection.count() if store and store.collection else 0,
+        "scope": "IT_INFRASTRUCTURE_OPERATIONS_ONLY",
+        "mode": "RAG_Grounded_Hybrid"
+    }
+
+@app.get("/api/chat/suggestions")
+def api_chat_suggestions(
+    incident_id: Optional[str] = None,
+    server_id: Optional[str] = None,
+    metric: Optional[str] = None
+):
+    """Returns dynamic, contextual suggested troubleshooting questions based on incident context."""
+    inc = None
+    if incident_id:
+        snapshot = simulator.get_snapshot()
+        candidates = snapshot.get("priority_queue", []) + snapshot.get("notifications", [])
+        for c in candidates:
+            if c.get("incident_id") == incident_id:
+                inc = c
+                break
+    if not inc and server_id:
+        inc = {"server_id": server_id, "metric_key": metric or ""}
+
+    suggestions = get_contextual_suggestions(inc)
+    return {"suggestions": suggestions}
+
+@app.post("/api/chat/clear")
+def api_chat_clear(req: ClearChatRequest):
+    """Clears conversation history for the specified session ID."""
+    success = chat_sessions.clear(req.session_id)
+    return {"session_id": req.session_id, "cleared": success}
 
 # ── WebSocket Telemetry ─────────────────────────────────────────────────
 
