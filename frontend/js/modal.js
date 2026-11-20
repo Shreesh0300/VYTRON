@@ -232,78 +232,22 @@ const IncidentModal = {
       </div>
     `;
 
-    // Format 5. Diagnostic Commands (with Copy button)
-    const commandsList = (guidance.diagnostic_commands || []).map((cmdObj, idx) => {
-      const cmdText = typeof cmdObj === "string" ? cmdObj : cmdObj.command;
-      const cmdDesc = typeof cmdObj === "object" ? cmdObj.description : "Diagnostic check";
-      const cmdTech = typeof cmdObj === "object" && cmdObj.technology ? `<span class="ai-cmd-tech">${cmdObj.technology}</span>` : "";
-      const escapedCmd = cmdText.replace(/"/g, '&quot;');
-      return `
-        <div class="ai-command-box">
-          <div class="ai-command-info">
-            <div style="display:flex; align-items:center; gap:6px; margin-bottom:3px;">
-              ${cmdTech}
-              <span class="ai-command-desc">${cmdDesc}</span>
-            </div>
-            <code class="ai-command-code">${cmdText}</code>
-          </div>
-          <button class="btn-copy-cmd" onclick="IncidentModal.copyCommand('${escapedCmd}', this)">Copy</button>
-        </div>
-      `;
-    }).join("");
-
-    const commandsHtml = `
-      <div class="ai-card-section">
-        <div class="ai-card-header">
-          <span class="ai-card-title">5. Diagnostic Commands</span>
-          <span style="font-size:10px; color:var(--text-dim);">Manual IT Operator Execution</span>
-        </div>
-        <div>${commandsList || "<p class='ai-text-block'>No specific shell commands suggested.</p>"}</div>
-      </div>
-    `;
-
-    // Format 6. Recommended Solutions
+    // Format 5. Recommended Solutions
     const solutionsList = (guidance.recommended_solutions || [])
       .map(s => `<li>${s}</li>`)
       .join("");
     const solutionsHtml = `
       <div class="ai-card-section">
-        <div class="ai-card-title">6. Recommended Corrective Actions</div>
+        <div class="ai-card-title">5. Recommended Corrective Actions</div>
         <ul class="ai-list">${solutionsList || "<li>Restart degraded worker containers.</li>"}</ul>
       </div>
     `;
 
-    // Format 7. Expected Outcome
+    // Format 6. Expected Outcome
     const outcomeHtml = `
       <div class="ai-card-section">
-        <div class="ai-card-title">7. Expected Outcome After Remediation</div>
+        <div class="ai-card-title">6. Expected Outcome After Remediation</div>
         <p class="ai-text-block">${guidance.expected_outcome || "Normalized baseline telemetry."}</p>
-      </div>
-    `;
-
-    // Format 8. Knowledge Sources (clickable links)
-    const sourcesList = (guidance.knowledge_sources || []).map(src => {
-      const title = src.title || "Technical Documentation";
-      const url = src.url || "#";
-      const sourceOrg = src.source || "Official Source";
-      const section = src.section || "Diagnostics";
-      return `
-        <a href="${url}" target="_blank" rel="noopener noreferrer" class="ai-source-pill" title="Click to view official documentation: ${title} (${section})">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-            <polyline points="15 3 21 3 21 9"></polyline>
-            <line x1="10" y1="14" x2="21" y2="3"></line>
-          </svg>
-          <span><strong>${sourceOrg}</strong>: ${title} (${section})</span>
-        </a>
-      `;
-    }).join("");
-
-    const sourcesHtml = `
-      <div class="ai-card-section">
-        <div class="ai-card-title">8. Retrieved Documentation Sources (ChromaDB)</div>
-        <div class="ai-sources-wrap">${sourcesList || "<p class='ai-text-block'>Local knowledge base grounding.</p>"}</div>
-        <div class="ai-provider-tag">${guidance.synthesized_by || "VYTRON Intelligence Engine"}</div>
       </div>
     `;
 
@@ -312,10 +256,8 @@ const IncidentModal = {
       ${causesHtml}
       ${evidenceHtml}
       ${stepsHtml}
-      ${commandsHtml}
       ${solutionsHtml}
       ${outcomeHtml}
-      ${sourcesHtml}
     `;
 
     this.aiContent.style.display = "flex";
