@@ -1,5 +1,5 @@
 """
-CICADA AIOps — Telemetry Generator
+VYTRON — Telemetry Generator
 Produces realistic RawTelemetryEvent objects for every server by sampling
 each metric with Gaussian noise around the server's current state values.
 """

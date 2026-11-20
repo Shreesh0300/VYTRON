@@ -1,6 +1,6 @@
-# CICADA AIOps — Secure AI-Powered Observability Platform
+# VYTRON — Autonomous Observability & AIOps Platform
 
-> **CICADA 2026 Hackathon** | 24-Hour Prototype
+> **VYTRON Platform**
 > Privacy-first, two-tier AIOps with hybrid anomaly detection
 
 ---
@@ -43,7 +43,7 @@
 
 ```bash
 # 1. Clone and enter project
-cd cicada-aiops
+cd vytron-aiops
 
 # 2. Install dependencies
 pip install -r requirements.txt
@@ -74,7 +74,7 @@ python start.py --stop
 ## 📁 Project Structure
 
 ```
-cicada-aiops/
+vytron-aiops/
 ├── simulator/          # Infrastructure Simulator (10 logical servers)
 ├── collector/          # Local Collector (Tier 1 — privacy boundary)
 ├── backend/            # Central Platform (Tier 2 — AIOps engine)
@@ -128,9 +128,9 @@ curl -X POST http://localhost:8001/scenarios/inject -H "Content-Type: applicatio
 | Collector offline detection | Within 60 seconds |
 | Buffered data recovery | No loss, no duplicates |
 
-## 👥 Team
+## 👥 Project
 
-Built for CICADA 2026 | TechForcz × Atria Institute of Technology
+Built for VYTRON Autonomous Observability
 
 ## 📄 License
 

@@ -1,5 +1,5 @@
 """
-CICADA AIOps — Infrastructure Simulator (FastAPI)
+VYTRON — Infrastructure Simulator (FastAPI)
 Runs on port 8001.  Background loops push telemetry to the collector
 (port 8002) and periodically inject fault scenarios.
 
@@ -47,7 +47,7 @@ from simulator.scenarios import (
 # ── Logging ──────────────────────────────────────────────────────────────
 
 logging.basicConfig(level=LOG_LEVEL, format=LOG_FORMAT)
-logger = logging.getLogger("cicada.simulator")
+logger = logging.getLogger("vytron.simulator")
 
 # ── Background task handles ─────────────────────────────────────────────
 
@@ -188,7 +188,7 @@ async def lifespan(application: FastAPI):  # type: ignore[type-arg]
 # ── FastAPI Application ─────────────────────────────────────────────────
 
 app = FastAPI(
-    title="CICADA AIOps — Infrastructure Simulator",
+    title="VYTRON — Infrastructure Simulator",
     description=(
         "Generates realistic telemetry for 10 simulated servers and pushes "
         "it to the collector service.  Supports manual and automatic fault "
@@ -212,7 +212,7 @@ class ScenarioRequest(BaseModel):
 async def health_check() -> dict[str, Any]:
     """Health / readiness probe."""
     return {
-        "service": "cicada-simulator",
+        "service": "vytron-simulator",
         "status": "running",
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "server_count": len(get_all_servers()),

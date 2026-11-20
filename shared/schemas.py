@@ -1,5 +1,5 @@
 """
-CICADA AIOps — Shared Pydantic Schemas
+VYTRON AIOps — Shared Pydantic Schemas
 Single source of truth for all telemetry, heartbeat, and API payloads.
 """
 

@@ -1,5 +1,5 @@
 """
-CICADA AIOps — Simulator Configuration
+VYTRON — Simulator Configuration
 Scenario schedule config, timing intervals, and collector target settings.
 All tunables are imported from shared.constants where applicable.
 """

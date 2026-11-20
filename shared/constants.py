@@ -1,5 +1,5 @@
 """
-CICADA AIOps — Shared Constants
+VYTRON AIOps — Shared Constants
 Central reference for all configurable values, thresholds, and field lists.
 """
 
@@ -16,7 +16,7 @@ COLLECTOR_URL = f"http://localhost:{COLLECTOR_PORT}"
 
 # ── Authentication ───────────────────────────────────────────────────────
 
-DEFAULT_API_KEY = "cicada-collector-key-2026"
+DEFAULT_API_KEY = "vytron-collector-key-2026"
 DEFAULT_TENANT_ID = "TENANT-01"
 DEFAULT_COLLECTOR_ID = "COLLECTOR-01"
 

@@ -1,5 +1,5 @@
 """
-CICADA AIOps — Multi-Process Launcher
+VYTRON AIOps — Multi-Process Launcher
 Starts all four services as separate processes on one machine.
 
 Usage:
@@ -49,7 +49,7 @@ def start_services():
     env["PYTHONPATH"] = ROOT
 
     print(f"\n{BOLD}╔══════════════════════════════════════════════════╗{RESET}")
-    print(f"{BOLD}║   CICADA AIOps — Secure Observability Platform   ║{RESET}")
+    print(f"{BOLD}║    VYTRON — Autonomous Observability Platform    ║{RESET}")
     print(f"{BOLD}╚══════════════════════════════════════════════════╝{RESET}\n")
 
     # Start backend, then simulator, then collector
@@ -138,7 +138,7 @@ def stop_services():
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="CICADA AIOps Launcher")
+    parser = argparse.ArgumentParser(description="VYTRON AIOps Launcher")
     parser.add_argument("--stop", action="store_true", help="Stop all services")
     args = parser.parse_args()
 

@@ -61,7 +61,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="CICADA Local Collector (Tier 1)",
+    title="VYTRON Local Collector (Tier 1)",
     description="Privacy-first telemetry collector with local buffering and egress audit.",
     version="1.0.0",
     lifespan=lifespan,
@@ -81,7 +81,7 @@ app.include_router(ingestion_router)
 @app.get("/")
 def read_root():
     return {
-        "service": "CICADA Local Collector",
+        "service": "VYTRON Local Collector",
         "tier": "Tier 1 (Customer Environment)",
         "collector_id": CONFIG["collector_id"],
         "tenant_id": CONFIG["tenant_id"],

@@ -1,5 +1,5 @@
 """
-CICADA AIOps — Scenario Engine
+VYTRON — Scenario Engine
 Implements fault-injection functions that mutate server state to simulate
 real-world infrastructure incidents.  Each scenario modifies the ``current``
 dict (and optionally ``metadata``) of one or more ServerState objects so
@@ -25,7 +25,7 @@ from simulator.server_profiles import (
 )
 from simulator.config import SCENARIO_WEIGHTS
 
-logger = logging.getLogger("cicada.simulator.scenarios")
+logger = logging.getLogger("vytron.simulator.scenarios")
 
 
 # ── Scenario Registry ───────────────────────────────────────────────────

@@ -1,5 +1,5 @@
 """
-CICADA AIOps — Server Profiles
+VYTRON — Server Profiles
 Defines the 10 simulated infrastructure nodes with mutable runtime state
 and immutable baseline definitions.  Every server exposes a state dict
 that scenarios can mutate; the telemetry generator reads from that state.

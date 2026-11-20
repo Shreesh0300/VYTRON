@@ -73,7 +73,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="CICADA Central AIOps Platform (Tier 2)",
+    title="VYTRON Central AIOps Platform (Tier 2)",
     description="Multi-tenant, metadata-only SaaS platform with hybrid AIOps detection and Autonomous Ops simulation.",
     version="2.0.0",
     lifespan=lifespan,
@@ -105,7 +105,7 @@ app.include_router(audit_router)
 @app.get("/")
 def read_root():
     return {
-        "service": "CICADA Central SaaS Platform",
+        "service": "VYTRON Central SaaS Platform",
         "tier": "Tier 2 (Central Metadata SaaS)",
         "version": "2.0.0",
         "status": "operational",
