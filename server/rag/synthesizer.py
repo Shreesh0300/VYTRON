@@ -11,6 +11,9 @@ import json
 import re
 from typing import Any
 import httpx
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from server.config import RECOMMENDED_ACTIONS, SERVERS_CONFIG
 
