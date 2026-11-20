@@ -564,11 +564,15 @@ class ChatbotSynthesizer:
                 "limitation": None
             }
 
-        # Format sources from chunks for technical intents
+        # Format sources from chunks for technical intents (deduplicated by title)
         sources = []
+        seen_titles: set[str] = set()
         for c in chunks:
             m = c.get("metadata", {})
             title = m.get("title") or m.get("doc_name") or "Technical Runbook"
+            if title in seen_titles:
+                continue
+            seen_titles.add(title)
             url = m.get("url") or "#"
             source_org = m.get("source") or "Official Manual"
             sec = m.get("section") or "Diagnostics"

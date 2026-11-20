@@ -320,28 +320,6 @@ const ChatApp = {
     const timeStr = new Date().toLocaleTimeString();
     const formattedHtml = this.formatMarkdown(data.answer || "No response generated.");
 
-    // Sources Pills HTML
-    let sourcesHtml = "";
-    if (data.sources && data.sources.length > 0) {
-      const pills = data.sources.map(s => `
-        <a href="${s.url || '#'}" target="_blank" rel="noopener noreferrer" class="source-chip" title="Click to view runbook: ${s.title}">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-            <polyline points="15 3 21 3 21 9"></polyline>
-            <line x1="10" y1="14" x2="21" y2="3"></line>
-          </svg>
-          <span><strong>${s.source || 'Doc'}:</strong> ${s.title}</span>
-        </a>
-      `).join("");
-
-      sourcesHtml = `
-        <div class="assistant-sources-wrap">
-          <span class="sources-label">Retrieved Runbook Grounding:</span>
-          <div class="sources-pills-list">${pills}</div>
-        </div>
-      `;
-    }
-
     // Context used tag
     let contextTag = "";
     if (data.incident_context_used && this.incidentContext) {
@@ -363,7 +341,6 @@ const ChatApp = {
         <div class="bubble-body markdown-body">
           ${formattedHtml}
         </div>
-        ${sourcesHtml}
       </div>
     `;
     this.elements.messagesContainer.appendChild(row);
