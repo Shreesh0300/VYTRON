@@ -158,7 +158,8 @@ function renderOverview(overview, activeScenario) {
 
   if (scenarioPill) {
     if (activeScenario) {
-      scenarioPill.textContent = `Active: ${activeScenario.title} [${activeScenario.affected_servers.join(", ")}]`;
+      const summaryText = activeScenario.summary || (activeScenario.affected_servers ? `[${activeScenario.affected_servers.join(", ")}]` : "Active Incidents");
+      scenarioPill.textContent = `Active: ${summaryText}`;
       scenarioPill.classList.add("active");
     } else {
       scenarioPill.textContent = "Normal Baseline (All 5 Stable)";
@@ -434,17 +435,18 @@ function setupControlListeners() {
 
   if (btnStart) {
     btnStart.addEventListener("click", async () => {
-      const scenarioId = scenarioSelect ? scenarioSelect.value : "scenario_01";
+      const selectedVal = scenarioSelect ? scenarioSelect.value : "auto";
+      const payload = selectedVal === "auto" ? { scenario: "auto" } : { server_count: parseInt(selectedVal) };
       try {
         const res = await fetch("/api/simulation/start", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ scenario: scenarioId }),
+          body: JSON.stringify(payload),
         });
         const data = await res.json();
         if (data.state) handleSnapshot(data.state);
       } catch (e) {
-        console.error("Failed to start scenario:", e);
+        console.error("Failed to start random simulation:", e);
       }
     });
   }

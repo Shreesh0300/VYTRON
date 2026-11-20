@@ -1,13 +1,13 @@
 """
 VYTRON — Infrastructure Monitoring & Incident Prioritization Platform
 FastAPI server serving REST APIs, real-time WebSocket telemetry, and static frontend.
-Single unified process on port 8000.
+Powered by the dynamic Randomized Incident Generation Engine.
 """
 
 import os
 import json
 import asyncio
-from typing import Set
+from typing import Set, Optional
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
@@ -64,8 +64,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="VYTRON AIOps Platform",
-    description="Real-time 5-Server Infrastructure Monitoring & Incident Prioritization",
-    version="2.0.0",
+    description="Real-time 5-Server Infrastructure Monitoring & Incident Prioritization with Dynamic Randomized Incident Generation",
+    version="2.1.0",
     lifespan=lifespan
 )
 
@@ -79,8 +79,10 @@ app.add_middleware(
 
 # ── REST Models ─────────────────────────────────────────────────────────
 
-class StartScenarioRequest(BaseModel):
-    scenario: str
+class StartSimulationRequest(BaseModel):
+    scenario: Optional[str] = "auto"
+    server_count: Optional[int] = None
+    mode: Optional[str] = "random"
 
 # ── API Endpoints ───────────────────────────────────────────────────────
 
@@ -91,23 +93,37 @@ def get_state():
 
 @app.get("/api/scenarios")
 def get_scenarios():
-    """Returns available simulation scenarios."""
-    snapshot = simulator.get_snapshot()
-    return {"scenarios": snapshot["scenarios"], "active_scenario": snapshot["active_scenario"]}
+    """Returns dynamic simulation modes."""
+    return {
+        "modes": [
+            {"id": "auto", "title": "Random Simulation (1-5 Servers)", "description": "Dynamically selects 1-5 unique servers and random issues"},
+            {"id": "1", "title": "Targeted Incident (1 Server)", "description": "Concentrates issue on a single random server"},
+            {"id": "2", "title": "Dual-Server Incident (2 Servers)", "description": "Selects two random servers with independent issues"},
+            {"id": "3", "title": "Multi-Server Incident (3 Servers)", "description": "Selects three random servers simultaneously"},
+            {"id": "5", "title": "Full Cluster Outage (All 5 Servers)", "description": "Triggers cascading issues across all five servers"},
+        ],
+        "active_simulation": simulator.active_plan,
+    }
 
 @app.post("/api/simulation/start")
-def start_simulation(req: StartScenarioRequest):
-    """Starts a specific scenario."""
-    success = simulator.start_scenario(req.scenario)
-    if not success:
-        raise HTTPException(status_code=400, detail=f"Invalid scenario ID '{req.scenario}'")
+def start_simulation(req: StartSimulationRequest = StartSimulationRequest()):
+    """Starts a new randomized simulation run."""
+    count = req.server_count
+    if count is None and req.scenario and req.scenario in ("1", "2", "3", "4", "5"):
+        count = int(req.scenario)
+
+    plan = simulator.start_simulation(server_count=count)
     simulator.tick()  # Immediate tick
-    return {"status": "started", "scenario": req.scenario, "state": simulator.get_snapshot()}
+    return {
+        "status": "started",
+        "plan": plan,
+        "state": simulator.get_snapshot(),
+    }
 
 @app.post("/api/simulation/stop")
 def stop_simulation():
-    """Stops the active scenario."""
-    simulator.stop_scenario()
+    """Stops the active simulation."""
+    simulator.stop_simulation()
     return {"status": "stopped", "state": simulator.get_snapshot()}
 
 @app.post("/api/simulation/reset")
@@ -151,15 +167,15 @@ async def websocket_endpoint(websocket: WebSocket):
         # Immediately deliver current state on connection
         await websocket.send_text(json.dumps(simulator.get_snapshot()))
         while True:
-            # Listen for optional incoming messages (e.g. controls)
             data = await websocket.receive_text()
             try:
                 cmd = json.loads(data)
                 action = cmd.get("action")
                 if action == "start":
-                    simulator.start_scenario(cmd.get("scenario", "scenario_01"))
+                    cnt = cmd.get("server_count") or cmd.get("count")
+                    simulator.start_simulation(server_count=cnt)
                 elif action == "stop":
-                    simulator.stop_scenario()
+                    simulator.stop_simulation()
                 elif action == "reset":
                     simulator.reset()
                 simulator.tick()

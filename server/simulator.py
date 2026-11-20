@@ -1,17 +1,18 @@
 """
 VYTRON — 5-Server Infrastructure Telemetry Simulator
-Maintains independent in-memory state and rolling history for all 5 servers.
-Simulates realistic baseline telemetry, controlled 2-server scenario abnormalities,
-and smooth recovery without any database reliance.
+Powered by the dynamic Randomized Incident Generation Engine.
+Generates realistic baseline telemetry, gradual multi-step degradation,
+rule-based metric relationships, and smooth recovery without any database reliance.
 """
 
 import time
 import random
 from collections import deque
 from typing import Any
-from server.config import SERVERS_CONFIG, SCENARIOS_CONFIG
+from server.config import SERVERS_CONFIG, RECOMMENDED_ACTIONS
 from server.detector import ThresholdDetector
 from server.incident_manager import IncidentManager
+from server.generator import RandomIncidentEngine
 
 HISTORY_MAX_POINTS = 60
 
@@ -19,8 +20,10 @@ class InfrastructureSimulator:
     def __init__(self):
         self.detector = ThresholdDetector(consecutive_required=2)
         self.incident_manager = IncidentManager()
+        self.engine = RandomIncidentEngine()
 
-        self.active_scenario_id: str | None = None
+        self.active_plan: dict[str, Any] | None = None
+        self.is_running: bool = False
         self.start_time = time.time()
         self.ticks = 0
 
@@ -43,8 +46,8 @@ class InfrastructureSimulator:
                 base = p_conf["baseline"]
                 metrics[param_key] = base
                 d = deque(maxlen=HISTORY_MAX_POINTS)
-                # Seed with a few baseline points
-                for i in range(10):
+                # Seed with 10 baseline points
+                for _ in range(10):
                     val = base + random.gauss(0, p_conf.get("noise_std", 1.0))
                     val = max(p_conf["min"], min(p_conf["max"], val))
                     d.append({"time": now_str, "value": round(val, 2)})
@@ -61,20 +64,41 @@ class InfrastructureSimulator:
                 "history": history,
             }
 
-    def start_scenario(self, scenario_id: str) -> bool:
-        """Starts one of the 4 predefined scenarios."""
-        if scenario_id in SCENARIOS_CONFIG:
-            self.active_scenario_id = scenario_id
-            return True
-        return False
+    def start_simulation(self, server_count: int | None = None) -> dict[str, Any]:
+        """
+        Starts a new randomized simulation run:
+        Selects random servers (1-5), random metrics, random issue types,
+        and starts gradual multi-step metric degradation.
+        """
+        self.active_plan = self.engine.generate_plan(server_count=server_count)
+        self.is_running = True
+        return self.active_plan
+
+    def start_scenario(self, scenario_id: str = "auto") -> bool:
+        """Compatibility wrapper for scenario-based triggers."""
+        count = None
+        if scenario_id in ("1", "2", "3", "4", "5"):
+            count = int(scenario_id)
+        elif scenario_id == "scenario_01" or scenario_id == "scenario_02" or scenario_id == "scenario_03" or scenario_id == "scenario_04":
+            count = 2
+        self.start_simulation(server_count=count)
+        return True
+
+    def stop_simulation(self):
+        """Stops active simulation, freezing current degradation targets."""
+        self.is_running = False
 
     def stop_scenario(self):
-        """Stops active scenario, allowing servers to return to baseline."""
-        self.active_scenario_id = None
+        """Compatibility alias for stop_simulation."""
+        self.stop_simulation()
 
     def reset(self):
-        """Resets all 5 servers to baseline, clears detector and resolves incidents."""
-        self.active_scenario_id = None
+        """
+        Resets all 5 servers to baseline, clears simulation plan,
+        resets detector breach states, and resolves active incidents.
+        """
+        self.active_plan = None
+        self.is_running = False
         self.detector.reset()
         self.incident_manager.reset()
 
@@ -93,38 +117,59 @@ class InfrastructureSimulator:
     def tick(self):
         """
         Executes one simulation step (called every ~1.5s).
-        Generates telemetry for all 5 servers:
-        - If unaffected by active scenario: baseline + gaussian noise.
-        - If affected by active scenario: mutated parameters towards scenario targets.
-        - Evaluates thresholds and updates incidents.
+        1. Checks auto-recovery duration timers.
+        2. Generates realistic telemetry:
+           - Unaffected servers/metrics: baseline + gaussian noise.
+           - Affected servers/metrics: gradual step degradation toward target values.
+           - Rule-based metric relationships: secondary nudges on correlated metrics.
+        3. Independently feeds telemetry into ThresholdDetector.
+        4. Detects breaches (consecutive confirmed) and creates/updates incidents.
+        5. Resolves incidents when metrics return to normal baseline.
         """
         self.ticks += 1
+        now = time.time()
         now_str = time.strftime("%H:%M:%S")
 
-        scenario = SCENARIOS_CONFIG.get(self.active_scenario_id) if self.active_scenario_id else None
-        affected_servers = scenario["affected_servers"] if scenario else []
-        scenario_mutations = scenario["mutations"] if scenario else {}
+        plan = self.active_plan if self.is_running else None
+        affected_servers = plan["affected_servers"] if plan else []
+        plan_targets = plan["targets"] if plan else {}
+        plan_durations = plan["durations"] if plan else {}
 
+        # 1. Check auto-recovery timers
+        if plan and plan_durations:
+            for t_key, dur_info in plan_durations.items():
+                if dur_info.get("auto_recover") and not dur_info.get("is_recovering"):
+                    elapsed = now - dur_info["start_time"]
+                    if elapsed >= dur_info["duration_seconds"]:
+                        dur_info["is_recovering"] = True
+
+        # 2. Update telemetry for all 5 servers
         for server_id, conf in SERVERS_CONFIG.items():
             s_state = self.servers[server_id]
             s_state["uptime_seconds"] += 2
             is_affected = server_id in affected_servers
 
-            # Update metrics
             for param_key, p_conf in conf["parameters"].items():
                 current_val = s_state["metrics"][param_key]
                 base = p_conf["baseline"]
                 noise_std = p_conf.get("noise_std", 1.0)
+                t_key = f"{server_id}.{param_key}"
 
-                if is_affected and param_key in scenario_mutations.get(server_id, {}):
-                    # Affected parameter in active scenario: smooth ramp toward target + noise
-                    target_val = scenario_mutations[server_id][param_key]
-                    step = 0.45 * (target_val - current_val)
-                    new_val = current_val + step + random.gauss(0, noise_std * 0.3)
+                if is_affected and t_key in plan_targets:
+                    dur_info = plan_durations.get(t_key, {})
+                    if dur_info.get("is_recovering"):
+                        # Auto-recovering: gradual step back to baseline
+                        step = 0.32 * (base - current_val)
+                        new_val = current_val + step + random.gauss(0, noise_std * 0.5)
+                    else:
+                        # Gradual metric degradation toward target value
+                        target_val = plan_targets[t_key]
+                        # Lerp factor 0.28 produces authentic 4-6 step progression
+                        step = 0.28 * (target_val - current_val)
+                        new_val = current_val + step + random.gauss(0, noise_std * 0.25)
                 else:
-                    # Normal baseline operation (or recovering back to baseline)
+                    # Normal baseline operation (or recovering back to baseline after reset)
                     if abs(current_val - base) > 2.0:
-                        # Smooth recovery back to baseline
                         step = 0.35 * (base - current_val)
                         new_val = current_val + step + random.gauss(0, noise_std)
                     else:
@@ -140,22 +185,23 @@ class InfrastructureSimulator:
                     "value": new_val
                 })
 
-            # Evaluate thresholds using detection engine
+            # 3. Independent Detection Engine Pipeline
+            # Evaluates server metrics against configured warning & critical thresholds
             server_status, confirmed_breaches, confirmed_recoveries = self.detector.evaluate_server(
                 server_id, s_state["metrics"]
             )
             s_state["status"] = server_status
 
-            # Process breach incidents
+            # 4. Incident Management: process confirmed breaches (with deduplication)
             for breach in confirmed_breaches:
                 self.incident_manager.process_breach(breach)
 
-            # Process metric recoveries
+            # 5. Incident Management: resolve recovered metrics
             for recovered_param in confirmed_recoveries:
                 self.incident_manager.resolve_metric(server_id, recovered_param)
 
     def get_snapshot(self) -> dict[str, Any]:
-        """Returns the complete current platform snapshot for UI / WebSocket."""
+        """Returns the complete platform snapshot for UI / WebSocket."""
         servers_data = {}
         normal_count = 0
         warning_count = 0
@@ -171,12 +217,10 @@ class InfrastructureSimulator:
             else:
                 normal_count += 1
 
-            # Format history for frontend charts
             hist_formatted = {}
             for p_key, d in s_state["history"].items():
                 hist_formatted[p_key] = list(d)
 
-            # Format uptime
             up_sec = s_state["uptime_seconds"]
             hrs, rem = divmod(up_sec, 3600)
             mins, secs = divmod(rem, 60)
@@ -204,14 +248,15 @@ class InfrastructureSimulator:
             highest_prio_item = priority_queue[0]
             highest_prio_str = highest_prio_item["priority"]
 
-        active_scenario_info = None
-        if self.active_scenario_id and self.active_scenario_id in SCENARIOS_CONFIG:
-            sc = SCENARIOS_CONFIG[self.active_scenario_id]
-            active_scenario_info = {
-                "id": sc["id"],
-                "title": sc["title"],
-                "description": sc["description"],
-                "affected_servers": sc["affected_servers"],
+        active_simulation_info = None
+        if self.active_plan and self.is_running:
+            active_simulation_info = {
+                "plan_id": self.active_plan["plan_id"],
+                "title": f"Dynamic Simulation ({len(self.active_plan['affected_servers'])} Servers Affected)",
+                "summary": self.active_plan["summary"],
+                "description": f"Randomized incident generation across: {', '.join(self.active_plan['affected_servers'])}",
+                "affected_servers": self.active_plan["affected_servers"],
+                "issues": self.active_plan["issues"],
             }
 
         return {
@@ -229,14 +274,6 @@ class InfrastructureSimulator:
             "servers": servers_data,
             "priority_queue": priority_queue,
             "notifications": notifications,
-            "active_scenario": active_scenario_info,
-            "scenarios": [
-                {
-                    "id": k,
-                    "title": v["title"],
-                    "description": v["description"],
-                    "affected_servers": v["affected_servers"],
-                }
-                for k, v in SCENARIOS_CONFIG.items()
-            ],
+            "active_scenario": active_simulation_info,
+            "active_simulation": active_simulation_info,
         }
