@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VYTRON — Infrastructure Monitoring & Incident Prioritization</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Header -->
+  <header class="app-header">
+    <div class="brand-section">
+      <div class="brand-logo">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+          <polyline points="2 17 12 22 22 17"></polyline>
+          <polyline points="2 12 12 17 22 12"></polyline>
+        </svg>
+      </div>
+      <div>
+        <h1 class="brand-title">VYTRON <span>AIOps</span></h1>
+        <p class="brand-subtitle">5-Server Infrastructure Monitoring & Incident Prioritization</p>
+      </div>
+    </div>
+
+    <div class="header-status-group">
+      <div class="live-indicator" id="wsStatus">
+        <span class="status-dot green"></span>
+        <span class="status-label">LIVE STREAM</span>
+      </div>
+      <div class="clock-display" id="clockDisplay">--:--:--</div>
+    </div>
+  </header>
+
+  <!-- Simulation Control Bar -->
+  <div class="control-bar-container">
+    <div class="control-bar">
+      <div class="control-label-group">
+        <span class="control-title">SIMULATION ENGINE:</span>
+        <span class="scenario-status-pill" id="scenarioActivePill">Normal Baseline (All 5 Stable)</span>
+      </div>
+
+      <div class="control-actions">
+        <div class="select-wrapper">
+          <select id="scenarioSelect" class="scenario-dropdown">
+            <option value="scenario_01">Scenario 01: Application & Database (APP-01, DB-01)</option>
+            <option value="scenario_02">Scenario 02: Authentication & Network (AUTH-01, NETWORK-01)</option>
+            <option value="scenario_03">Scenario 03: Backup & Application (BACKUP-01, APP-01)</option>
+            <option value="scenario_04">Scenario 04: Database & Network (DB-01, NETWORK-01)</option>
+          </select>
+        </div>
+
+        <button id="btnStart" class="btn btn-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          Start Simulation
+        </button>
+
+        <button id="btnStop" class="btn btn-secondary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <rect x="6" y="4" width="4" height="16"></rect>
+            <rect x="14" y="4" width="4" height="16"></rect>
+          </svg>
+          Stop
+        </button>
+
+        <button id="btnReset" class="btn btn-danger">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+            <path d="M3 3v5h5"></path>
+          </svg>
+          Reset All
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <main class="dashboard-main">
+    <!-- SECTION A: Overview -->
+    <section class="section-container" id="sectionOverview">
+      <div class="section-header">
+        <h2 class="section-title">SECTION A: SYSTEM OVERVIEW</h2>
+        <span class="section-meta">Live Cluster Health</span>
+      </div>
+
+      <div class="overview-grid">
+        <!-- Card 1: Total Servers -->
+        <div class="stat-card">
+          <div class="stat-icon-wrap blue">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+              <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+              <line x1="6" y1="6" x2="6.01" y2="6"></line>
+              <line x1="6" y1="18" x2="6.01" y2="18"></line>
+            </svg>
+          </div>
+          <div class="stat-body">
+            <div class="stat-label">TOTAL SERVERS</div>
+            <div class="stat-value" id="statTotalServers">5</div>
+            <div class="stat-sub">Independent Nodes</div>
+          </div>
+        </div>
+
+        <!-- Card 2: Normal Servers -->
+        <div class="stat-card">
+          <div class="stat-icon-wrap green">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+          </div>
+          <div class="stat-body">
+            <div class="stat-label">NORMAL SERVERS</div>
+            <div class="stat-value text-green" id="statNormalServers">5</div>
+            <div class="stat-sub">Healthy & Baseline</div>
+          </div>
+        </div>
+
+        <!-- Card 3: Warning Servers -->
+        <div class="stat-card">
+          <div class="stat-icon-wrap amber">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+          </div>
+          <div class="stat-body">
+            <div class="stat-label">WARNING SERVERS</div>
+            <div class="stat-value text-amber" id="statWarningServers">0</div>
+            <div class="stat-sub">Threshold Elevated</div>
+          </div>
+        </div>
+
+        <!-- Card 4: Critical Servers -->
+        <div class="stat-card">
+          <div class="stat-icon-wrap red">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+          </div>
+          <div class="stat-body">
+            <div class="stat-label">CRITICAL SERVERS</div>
+            <div class="stat-value text-red" id="statCriticalServers">0</div>
+            <div class="stat-sub">Breach in Progress</div>
+          </div>
+        </div>
+
+        <!-- Card 5: Highest Priority Incident -->
+        <div class="stat-card">
+          <div class="stat-icon-wrap purple">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+          </div>
+          <div class="stat-body">
+            <div class="stat-label">ACTIVE INCIDENTS / PRIORITY</div>
+            <div class="stat-value-group">
+              <span class="stat-value text-cyan" id="statActiveIncidents">0</span>
+              <span class="priority-badge-lg p-none" id="statHighestPriorityBadge">NONE</span>
+            </div>
+            <div class="stat-sub" id="statHighestPriorityDesc">Cluster Stable</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION B: Server Monitoring -->
+    <section class="section-container" id="sectionServers">
+      <div class="section-header">
+        <h2 class="section-title">SECTION B: SERVER MONITORING (5 SERVERS)</h2>
+        <span class="section-meta">Click any server card below to view real-time diagnostics & charts</span>
+      </div>
+
+      <!-- 5 Dynamic Server Cards -->
+      <div class="servers-grid" id="serversCardsGrid">
+        <!-- Rendered dynamically by app.js -->
+      </div>
+
+      <!-- Detailed Server Diagnostics & Visual Charts -->
+      <div class="server-detail-panel" id="serverDetailPanel">
+        <div class="detail-panel-header">
+          <div class="server-title-group">
+            <span class="server-badge" id="detailServerId">APP-01</span>
+            <h3 class="server-title" id="detailServerName">Application Server</h3>
+            <span class="server-type-pill" id="detailServerType">Application</span>
+            <span class="status-pill status-normal" id="detailServerStatus">NORMAL</span>
+          </div>
+          <div class="server-meta-group">
+            <span class="meta-label">ROLE: <strong id="detailServerRole">Main application processing</strong></span>
+            <span class="meta-separator">•</span>
+            <span class="meta-label">UPTIME: <strong id="detailServerUptime">00h 00m 00s</strong></span>
+          </div>
+        </div>
+
+        <!-- 4 Metric Cards for Selected Server -->
+        <div class="metric-parameters-grid" id="detailParametersGrid">
+          <!-- Rendered dynamically -->
+        </div>
+
+        <!-- 4 Line Charts with Threshold Lines -->
+        <div class="charts-grid" id="detailChartsGrid">
+          <div class="chart-box">
+            <div class="chart-header">
+              <span class="chart-title" id="chart1Title">Metric 1</span>
+              <div class="chart-legend">
+                <span class="legend-item"><span class="legend-line telemetry"></span> Value</span>
+                <span class="legend-item"><span class="legend-line warning"></span> Warning</span>
+                <span class="legend-item"><span class="legend-line critical"></span> Critical</span>
+              </div>
+            </div>
+            <div class="chart-canvas-container">
+              <canvas id="chartCanvas1"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-box">
+            <div class="chart-header">
+              <span class="chart-title" id="chart2Title">Metric 2</span>
+              <div class="chart-legend">
+                <span class="legend-item"><span class="legend-line telemetry"></span> Value</span>
+                <span class="legend-item"><span class="legend-line warning"></span> Warning</span>
+                <span class="legend-item"><span class="legend-line critical"></span> Critical</span>
+              </div>
+            </div>
+            <div class="chart-canvas-container">
+              <canvas id="chartCanvas2"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-box">
+            <div class="chart-header">
+              <span class="chart-title" id="chart3Title">Metric 3</span>
+              <div class="chart-legend">
+                <span class="legend-item"><span class="legend-line telemetry"></span> Value</span>
+                <span class="legend-item"><span class="legend-line warning"></span> Warning</span>
+                <span class="legend-item"><span class="legend-line critical"></span> Critical</span>
+              </div>
+            </div>
+            <div class="chart-canvas-container">
+              <canvas id="chartCanvas3"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-box">
+            <div class="chart-header">
+              <span class="chart-title" id="chart4Title">Metric 4</span>
+              <div class="chart-legend">
+                <span class="legend-item"><span class="legend-line telemetry"></span> Value</span>
+                <span class="legend-item"><span class="legend-line warning"></span> Warning</span>
+                <span class="legend-item"><span class="legend-line critical"></span> Critical</span>
+              </div>
+            </div>
+            <div class="chart-canvas-container">
+              <canvas id="chartCanvas4"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Lower Dual Split: SECTION C & SECTION D -->
+    <div class="lower-sections-split">
+      <!-- SECTION C: Notifications -->
+      <section class="section-container split-left" id="sectionNotifications">
+        <div class="section-header">
+          <div class="header-left">
+            <h2 class="section-title">SECTION C: INCIDENT NOTIFICATIONS</h2>
+            <span class="section-badge" id="notificationsCountBadge">0 alerts</span>
+          </div>
+          <span class="section-hint">Click any row for diagnostic details & actions</span>
+        </div>
+
+        <div class="notifications-table-container">
+          <table class="data-table" id="notificationsTable">
+            <thead>
+              <tr>
+                <th>Incident ID</th>
+                <th>Time</th>
+                <th>Server</th>
+                <th>Issue / Breach Description</th>
+                <th>Priority</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="notificationsTbody">
+              <tr>
+                <td colspan="6" class="empty-state">No incidents detected. All 5 servers operating within normal thresholds.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- SECTION D: Priority Queue -->
+      <section class="section-container split-right" id="sectionPriorityQueue">
+        <div class="section-header">
+          <div class="header-left">
+            <h2 class="section-title">SECTION D: INCIDENT PRIORITY QUEUE</h2>
+            <span class="section-badge" id="queueCountBadge">0 active</span>
+          </div>
+          <span class="section-hint">Strict P1 &gt; P2 &gt; P3 &gt; P4 Prioritization</span>
+        </div>
+
+        <div class="priority-queue-list" id="priorityQueueList">
+          <div class="empty-state-queue">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M8 12l2 2 4-4"></path>
+            </svg>
+            <p>Queue is empty — No active unresolved incidents.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Incident Diagnostic Modal -->
+  <div class="modal-backdrop" id="incidentModalBackdrop">
+    <div class="modal-box" id="incidentModalBox">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <span class="priority-badge-modal" id="modalPriorityBadge">P1</span>
+          <div>
+            <h3 class="modal-title" id="modalIncidentId">INC-2026-0001</h3>
+            <span class="modal-subtitle" id="modalServerLabel">APP-01 — Application Server</span>
+          </div>
+        </div>
+        <button class="modal-close-btn" id="modalCloseBtn">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="modal-info-grid">
+          <div class="modal-info-card">
+            <div class="card-label">SEVERITY LEVEL</div>
+            <div class="card-value" id="modalSeverity">CRITICAL</div>
+          </div>
+          <div class="modal-info-card">
+            <div class="card-label">CURRENT STATUS</div>
+            <div class="card-value" id="modalStatus">OPEN</div>
+          </div>
+          <div class="modal-info-card">
+            <div class="card-label">TIME DETECTED</div>
+            <div class="card-value" id="modalTimeDetected">--:--:--</div>
+          </div>
+          <div class="modal-info-card">
+            <div class="card-label">TIME RESOLVED</div>
+            <div class="card-value" id="modalTimeResolved">Active</div>
+          </div>
+        </div>
+
+        <div class="modal-metric-box">
+          <div class="metric-box-title">THRESHOLD EVALUATION</div>
+          <div class="metric-comparison">
+            <div class="metric-comp-item">
+              <span class="comp-label">Observed Reading:</span>
+              <strong class="comp-val red" id="modalObserved">94.5 %</strong>
+            </div>
+            <div class="metric-arrow">➔</div>
+            <div class="metric-comp-item">
+              <span class="comp-label">Breached Threshold:</span>
+              <strong class="comp-val" id="modalThreshold">90.0 %</strong>
+            </div>
+            <div class="metric-comp-item">
+              <span class="comp-label">Parameter:</span>
+              <strong class="comp-val highlight" id="modalParamName">CPU Utilization</strong>
+            </div>
+          </div>
+          <p class="modal-issue-desc" id="modalIssueDesc">Description...</p>
+        </div>
+
+        <div class="modal-action-box">
+          <div class="action-box-header">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+            <span>RECOMMENDED REMEDIATION ACTION</span>
+          </div>
+          <p class="action-text" id="modalRecommendedAction">Recommended action text...</p>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="modalAcknowledgeBtn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/chart.min.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/modal.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
