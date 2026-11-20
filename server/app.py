@@ -137,6 +137,36 @@ def reset_simulation():
     simulator.reset()
     return {"status": "reset", "state": simulator.get_snapshot()}
 
+@app.get("/api/egress/proof")
+def get_egress_proof():
+    """Returns the latest Egress Proof and recent transmission audit history."""
+    return {
+        "latest": simulator.egress_engine.get_latest_proof(),
+        "history": simulator.egress_engine.get_history(10),
+        "stats": simulator.egress_engine.get_stats(),
+    }
+
+@app.get("/api/egress/policy")
+def get_egress_policy():
+    """Returns Tier 1 allow-list policy and redaction rules."""
+    from server.privacy import ALLOWED_EGRESS_FIELDS, BLOCKED_RAW_KEYS, SENSITIVE_PATTERNS
+    return {
+        "tier1_trust_boundary": "Customer Local Environment (Local-First Security)",
+        "tier2_saas": "Central SaaS Ingestion (Metadata Only)",
+        "allowed_fields": ALLOWED_EGRESS_FIELDS,
+        "blocked_raw_keys": list(BLOCKED_RAW_KEYS),
+        "sensitive_patterns_count": len(SENSITIVE_PATTERNS),
+        "tenant_id": simulator.egress_engine.tenant_id,
+        "collector_id": simulator.egress_engine.collector_id,
+    }
+
+@app.post("/api/collector/outage/toggle")
+def toggle_outage():
+    """Toggles simulated SaaS link outage to demonstrate local buffering and zero-loss replay."""
+    new_state = not simulator.egress_engine._outage_simulated
+    res = simulator.egress_engine.set_outage(new_state)
+    return res
+
 @app.get("/api/servers")
 def get_servers():
     """Returns all 5 servers current telemetry summary."""

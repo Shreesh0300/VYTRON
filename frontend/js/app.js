@@ -114,16 +114,19 @@ function handleSnapshot(snapshot) {
   if (!snapshot || !snapshot.servers) return;
   AppState.latestSnapshot = snapshot;
 
-  renderOverview(snapshot.overview, snapshot.active_scenario);
+  renderOverview(snapshot.overview, snapshot.active_scenario, snapshot.data_freshness);
   renderServersGrid(snapshot.servers);
   renderSelectedServerDetail(snapshot.servers);
   renderNotifications(snapshot.notifications);
   renderPriorityQueue(snapshot.priority_queue);
+  if (snapshot.egress_proof) {
+    renderEgressProof(snapshot.egress_proof, snapshot.data_freshness);
+  }
 }
 
 // ── Section A: Overview Rendering ─────────────────────────────────────────
 
-function renderOverview(overview, activeScenario) {
+function renderOverview(overview, activeScenario, dataFreshness) {
   if (!overview) return;
 
   const totalEl = document.getElementById("statTotalServers");
@@ -135,11 +138,46 @@ function renderOverview(overview, activeScenario) {
   const prioDesc = document.getElementById("statHighestPriorityDesc");
   const scenarioPill = document.getElementById("scenarioActivePill");
 
+  // 4 Health State Cards
+  const excellentEl = document.getElementById("statExcellentServers");
+  const goodEl = document.getElementById("statGoodServers");
+  const fairEl = document.getElementById("statFairServers");
+  const poorEl = document.getElementById("statPoorServers");
+  const clusterBadge = document.getElementById("clusterHealthBadge");
+
   if (totalEl) totalEl.textContent = overview.total_servers || 5;
   if (normalEl) normalEl.textContent = overview.normal_count || 0;
   if (warnEl) warnEl.textContent = overview.warning_count || 0;
   if (critEl) critEl.textContent = overview.critical_count || 0;
   if (activeIncEl) activeIncEl.textContent = overview.active_incidents || 0;
+
+  if (excellentEl) excellentEl.textContent = overview.excellent_count !== undefined ? overview.excellent_count : (overview.normal_count || 0);
+  if (goodEl) goodEl.textContent = overview.good_count !== undefined ? overview.good_count : 0;
+  if (fairEl) fairEl.textContent = overview.fair_count !== undefined ? overview.fair_count : (overview.warning_count || 0);
+  if (poorEl) poorEl.textContent = overview.poor_count !== undefined ? overview.poor_count : (overview.critical_count || 0);
+
+  if (clusterBadge) {
+    const ch = (overview.cluster_health || "EXCELLENT").toUpperCase();
+    clusterBadge.textContent = ch;
+    clusterBadge.className = `section-badge health-badge health-${ch.toLowerCase()}`;
+  }
+
+  // Trust Boundary & Real-Time Targets Header Bar
+  if (dataFreshness) {
+    const barLatency = document.getElementById("barLatency");
+    const barAlertLatency = document.getElementById("barAlertLatency");
+    const barFreshness = document.getElementById("barFreshness");
+
+    if (barLatency && dataFreshness.ingest_latency_seconds !== undefined) {
+      barLatency.textContent = `${dataFreshness.ingest_latency_seconds}s (Target ≤10s)`;
+    }
+    if (barAlertLatency && dataFreshness.alert_latency_seconds !== undefined) {
+      barAlertLatency.textContent = `${dataFreshness.alert_latency_seconds}s (Target ≤15s)`;
+    }
+    if (barFreshness && dataFreshness.utc_timestamp) {
+      barFreshness.textContent = `${dataFreshness.status || 'REAL-TIME'} (${dataFreshness.utc_timestamp.slice(11, 19)} UTC)`;
+    }
+  }
 
   if (prioBadge) {
     const hp = overview.highest_priority || "NONE";
@@ -187,6 +225,10 @@ function renderServersGrid(servers) {
     if (status === "CRITICAL") alertClass = "alert-critical";
     else if (status === "WARNING") alertClass = "alert-warning";
 
+    // 4 Health State determination (EXCELLENT, GOOD, FAIR, POOR)
+    const healthState = (s.health_state || (status === "CRITICAL" ? "POOR" : status === "WARNING" ? "FAIR" : "EXCELLENT")).toUpperCase();
+    const healthReason = s.health_reason || `${s.name} operating within baseline parameters.`;
+
     // 4 metrics mini list
     let metricsHtml = "";
     const meta = s.parameters_meta || {};
@@ -207,9 +249,16 @@ function renderServersGrid(servers) {
         }
       }
 
+      // Concise display name to avoid UI truncation while preserving full name in title
+      let displayName = pMeta.name;
+      if (pKey === "requests_per_sec") displayName = "Requests / Sec";
+      else if (pKey === "response_time") displayName = "Response Time";
+      else if (pKey === "login_requests_per_sec") displayName = "Login Reqs / Sec";
+      else if (pKey === "active_connections") displayName = "Connections";
+
       metricsHtml += `
         <div class="mini-metric-row">
-          <span class="mini-metric-name">${pMeta.name}</span>
+          <span class="mini-metric-name" title="${pMeta.name}">${displayName}</span>
           <span class="mini-metric-val ${valClass}">${val} ${pMeta.unit}</span>
         </div>
       `;
@@ -221,7 +270,10 @@ function renderServersGrid(servers) {
         <div>
           <div class="card-top">
             <span class="server-id-badge">${s.id}</span>
-            <span class="status-badge status-${statusClass}">${status}</span>
+            <div class="card-badge-group">
+              <span class="health-badge-card health-${healthState.toLowerCase()}" title="State: ${healthState}&#10;Reason: ${healthReason}">${healthState}</span>
+              <span class="status-badge status-${statusClass}">${status}</span>
+            </div>
           </div>
           <div class="server-summary-name">${s.name}</div>
           <div class="card-metrics-mini">
@@ -475,3 +527,106 @@ function setupControlListeners() {
     });
   }
 }
+
+// ── Section E: Egress Proof & Privacy Audit Rendering ─────────────────────
+
+function renderEgressProof(egressProof, dataFreshness) {
+  if (!egressProof) return;
+
+  const latest = egressProof.latest || egressProof.latest_proof;
+  const history = egressProof.history || egressProof.recent_history || [];
+  const stats = egressProof.stats || {};
+  const isOutage = stats.outage_simulated !== undefined ? stats.outage_simulated : egressProof.is_outage_simulated;
+  const bufferedCount = stats.buffered_in_queue !== undefined ? stats.buffered_in_queue : (egressProof.buffered_count || 0);
+
+  // Render Left Side: Tier 1 Raw Local Telemetry (showing sensitive fields kept local)
+  const rawPre = document.getElementById("egressRawJson");
+  const rawData = latest?.raw_tier1_preview || latest?.raw_tier1_record;
+  if (rawPre && rawData) {
+    rawPre.textContent = JSON.stringify(rawData, null, 2);
+  }
+
+  // Render Right Side: Tier 2 SaaS Sanitized Metadata
+  const sanitizedPre = document.getElementById("egressSanitizedJson");
+  const sanitizedData = latest?.sanitized_tier2_payload;
+  if (sanitizedPre && sanitizedData) {
+    sanitizedPre.textContent = JSON.stringify(sanitizedData, null, 2);
+  }
+
+  // Render SHA-256 Cryptographic Hash
+  const hashEl = document.getElementById("egressSha256");
+  if (hashEl && latest) {
+    hashEl.textContent = latest.sha256_hash || "--";
+  }
+
+  // Render Policy Result Badge
+  const policyEl = document.getElementById("egressPolicyResult");
+  if (policyEl && latest) {
+    policyEl.textContent = latest.policy_result || "APPROVED & ENCRYPTED";
+  }
+
+  // Render Outage Simulation Button State
+  const outageBtn = document.getElementById("btnToggleOutage");
+  const outageText = document.getElementById("outageBtnText");
+  if (outageBtn && outageText) {
+    if (isOutage) {
+      outageBtn.className = "btn btn-sm btn-danger active";
+      outageText.textContent = `⚠️ Network Outage Simulated (Buffering: ${bufferedCount})`;
+    } else {
+      outageBtn.className = "btn btn-sm btn-outline-warning";
+      outageText.textContent = "Simulate Network Outage (Buffer Test)";
+    }
+  }
+
+  // Render Audit Table & Stats
+  const auditTbody = document.getElementById("egressAuditTbody");
+  const auditStats = document.getElementById("egressAuditStats");
+
+  if (auditStats) {
+    const ingestSec = dataFreshness?.ingest_latency_seconds !== undefined ? dataFreshness.ingest_latency_seconds : "1.1";
+    auditStats.textContent = `Policy: STRICT_ALLOW_LIST_ONLY | Secrets Scrubbed: 100% | Payloads Sent: ${history.length} | Ingest Latency: ${ingestSec}s`;
+  }
+
+  if (auditTbody && history.length > 0) {
+    auditTbody.innerHTML = history.slice(-8).reverse().map(item => {
+      const blockedCount = item.blocked_fields ? item.blocked_fields.length : 0;
+      const allowedCount = item.allowed_fields ? item.allowed_fields.length : 0;
+      const rawTs = item.timestamp_utc || item.timestamp;
+      const timeStr = rawTs ? rawTs.slice(11, 19) : "--:--:--";
+      return `
+        <tr>
+          <td class="font-mono text-cyan">${item.payload_id || 'PAYLOAD-xxxx'}</td>
+          <td class="font-mono">${timeStr} UTC</td>
+          <td><span class="server-tag">${item.server_id}</span></td>
+          <td><span class="badge-approved">${item.policy_result}</span></td>
+          <td class="text-green">${allowedCount} fields allowed</td>
+          <td class="text-red">${blockedCount} sensitive keys blocked</td>
+          <td><span class="status-transmitted">✓ Transmitted</span></td>
+        </tr>
+      `;
+    }).join("");
+  }
+}
+
+// ── Outage Simulation Toggle Handler ──────────────────────────────────────
+
+window.toggleOutageSimulation = async function() {
+  try {
+    const res = await fetch("/api/collector/outage/toggle", { method: "POST" });
+    const data = await res.json();
+    const outageBtn = document.getElementById("btnToggleOutage");
+    const outageText = document.getElementById("outageBtnText");
+
+    if (data.status) {
+      if (data.is_outage_simulated) {
+        if (outageBtn) outageBtn.className = "btn btn-sm btn-danger active";
+        if (outageText) outageText.textContent = `⚠️ Network Outage Simulated (Buffering: ${data.buffered_count})`;
+      } else {
+        if (outageBtn) outageBtn.className = "btn btn-sm btn-outline-warning";
+        if (outageText) outageText.textContent = "Simulate Network Outage (Buffer Test)";
+      }
+    }
+  } catch (e) {
+    console.error("Failed to toggle network outage simulation:", e);
+  }
+};

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VYTRON — Infrastructure Monitoring & Incident Prioritization</title>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=2.2">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -34,6 +34,24 @@
       <div class="clock-display" id="clockDisplay">--:--:--</div>
     </div>
   </header>
+
+  <!-- Tier 1 to Tier 2 Trust Boundary & Observability Bar -->
+  <div class="trust-boundary-bar">
+    <div class="trust-pill-group">
+      <span class="trust-tag tier1"><span class="pulse-dot-edge"></span>TIER 1: Customer Environment (Edge Collector)</span>
+      <span class="trust-arrow">🔒 TLS + API-Key Auth ➔</span>
+      <span class="trust-tag tier2">TIER 2: Central Platform (Metadata Only)</span>
+    </div>
+    <div class="trust-meta-group">
+      <span class="trust-meta-item">TENANT: <strong id="barTenantId">TENANT-01</strong></span>
+      <span class="trust-meta-sep">•</span>
+      <span class="trust-meta-item">INGEST LATENCY: <strong class="text-green" id="barLatency">1.2s (Target ≤10s)</strong></span>
+      <span class="trust-meta-sep">•</span>
+      <span class="trust-meta-item">ALERT DETECTION: <strong class="text-green" id="barAlertLatency">2.1s (Target ≤15s)</strong></span>
+      <span class="trust-meta-sep">•</span>
+      <span class="trust-meta-item">DATA FRESHNESS: <strong class="text-cyan" id="barFreshness">REAL-TIME (&lt;1.5s)</strong></span>
+    </div>
+  </div>
 
   <!-- Simulation Control Bar -->
   <div class="control-bar-container">
@@ -81,11 +99,14 @@
   </div>
 
   <main class="dashboard-main">
-    <!-- SECTION A: Overview -->
+    <!-- SECTION A: System Overview (4 Health States & Cluster Health) -->
     <section class="section-container" id="sectionOverview">
       <div class="section-header">
-        <h2 class="section-title">SECTION A: SYSTEM OVERVIEW</h2>
-        <span class="section-meta">Live Cluster Health</span>
+        <div class="header-left">
+          <h2 class="section-title">SECTION A: SYSTEM OVERVIEW (4 HEALTH STATES)</h2>
+          <span class="section-badge health-badge" id="clusterHealthBadge">EXCELLENT</span>
+        </div>
+        <span class="section-meta" id="overviewFreshnessMeta">UTC Freshness: 100% Real-Time (&lt;1.5s)</span>
       </div>
 
       <div class="overview-grid">
@@ -102,11 +123,11 @@
           <div class="stat-body">
             <div class="stat-label">TOTAL SERVERS</div>
             <div class="stat-value" id="statTotalServers">5</div>
-            <div class="stat-sub">Independent Nodes</div>
+            <div class="stat-sub">5 Monitored Roles</div>
           </div>
         </div>
 
-        <!-- Card 2: Normal Servers -->
+        <!-- Card 2: Excellent Health -->
         <div class="stat-card">
           <div class="stat-icon-wrap green">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -115,13 +136,29 @@
             </svg>
           </div>
           <div class="stat-body">
-            <div class="stat-label">NORMAL SERVERS</div>
-            <div class="stat-value text-green" id="statNormalServers">5</div>
-            <div class="stat-sub">Healthy & Baseline</div>
+            <div class="stat-label">EXCELLENT (HEALTHY)</div>
+            <div class="stat-value text-green" id="statExcellentServers">5</div>
+            <div class="stat-sub" id="statNormalServersSub">Optimal Baseline</div>
+            <span style="display:none;" id="statNormalServers">5</span>
           </div>
         </div>
 
-        <!-- Card 3: Warning Servers -->
+        <!-- Card 3: Good Health -->
+        <div class="stat-card">
+          <div class="stat-icon-wrap cyan">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M8 12l2 2 4-4"></path>
+            </svg>
+          </div>
+          <div class="stat-body">
+            <div class="stat-label">GOOD (NORMAL)</div>
+            <div class="stat-value text-cyan" id="statGoodServers">0</div>
+            <div class="stat-sub">Nominal Variance</div>
+          </div>
+        </div>
+
+        <!-- Card 4: Fair Health -->
         <div class="stat-card">
           <div class="stat-icon-wrap amber">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -131,13 +168,14 @@
             </svg>
           </div>
           <div class="stat-body">
-            <div class="stat-label">WARNING SERVERS</div>
-            <div class="stat-value text-amber" id="statWarningServers">0</div>
-            <div class="stat-sub">Threshold Elevated</div>
+            <div class="stat-label">FAIR (NEEDS ATTENTION)</div>
+            <div class="stat-value text-amber" id="statFairServers">0</div>
+            <div class="stat-sub">Elevated / Warnings</div>
+            <span style="display:none;" id="statWarningServers">0</span>
           </div>
         </div>
 
-        <!-- Card 4: Critical Servers -->
+        <!-- Card 5: Poor Health -->
         <div class="stat-card">
           <div class="stat-icon-wrap red">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -147,13 +185,14 @@
             </svg>
           </div>
           <div class="stat-body">
-            <div class="stat-label">CRITICAL SERVERS</div>
-            <div class="stat-value text-red" id="statCriticalServers">0</div>
-            <div class="stat-sub">Breach in Progress</div>
+            <div class="stat-label">POOR (CRITICAL)</div>
+            <div class="stat-value text-red" id="statPoorServers">0</div>
+            <div class="stat-sub">Active Breach</div>
+            <span style="display:none;" id="statCriticalServers">0</span>
           </div>
         </div>
 
-        <!-- Card 5: Highest Priority Incident -->
+        <!-- Card 6: Highest Priority Incident -->
         <div class="stat-card">
           <div class="stat-icon-wrap purple">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -320,6 +359,100 @@
         </div>
       </section>
     </div>
+
+    <!-- SECTION E: Egress Proof & Privacy Audit Panel (Mandatory Hackathon Criterion) -->
+    <section class="section-container" id="sectionEgressProof">
+      <div class="section-header">
+        <div class="header-left">
+          <h2 class="section-title">SECTION E: EGRESS PROOF &amp; DATA PRIVACY AUDIT PANEL</h2>
+          <span class="section-badge egress-badge">MANDATORY HACKATHON CRITERION</span>
+        </div>
+        <div class="egress-header-actions">
+          <button id="btnToggleOutage" class="btn btn-sm btn-outline-warning" onclick="toggleOutageSimulation()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 1l22 22"></path>
+              <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path>
+              <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path>
+              <path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path>
+              <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path>
+            </svg>
+            <span id="outageBtnText">Simulate Network Outage (Buffer Test)</span>
+          </button>
+        </div>
+      </div>
+
+      <p class="section-desc-note">
+        <strong>Trust Boundary Enforcement:</strong> Demonstrates that raw application logs, database passwords, and API secrets remain strictly inside the local customer environment (Tier 1). Only approved, allow-listed metadata with pseudonymous IDs crosses into the SaaS platform (Tier 2).
+      </p>
+
+      <!-- Live Side-by-Side Comparison -->
+      <div class="egress-diff-grid">
+        <!-- Left: Tier 1 Raw Local Telemetry -->
+        <div class="egress-diff-card tier1-card">
+          <div class="diff-card-header">
+            <div class="diff-header-title">
+              <span class="diff-badge tier1-badge">TIER 1: CUSTOMER LOCAL DATA</span>
+              <span class="diff-subtitle">Raw Logs, Internal IPs &amp; Injected Secrets (Kept Local)</span>
+            </div>
+            <span class="privacy-status-pill blocked">BLOCKED FROM EGRESS</span>
+          </div>
+          <div class="diff-code-wrapper">
+            <pre class="diff-json" id="egressRawJson">// Waiting for local collector telemetry stream...</pre>
+          </div>
+          <div class="diff-card-footer">
+            <span class="footer-note">🚫 Red fields (credentials, internal IPs, raw queries) are stripped by policy before transmission.</span>
+          </div>
+        </div>
+
+        <!-- Right: Tier 2 SaaS Transmitted Metadata -->
+        <div class="egress-diff-card tier2-card">
+          <div class="diff-card-header">
+            <div class="diff-header-title">
+              <span class="diff-badge tier2-badge">TIER 2: SAAS METADATA PAYLOAD</span>
+              <span class="diff-subtitle">Strict Allow-List Only with SHA-256 Cryptographic Hash</span>
+            </div>
+            <span class="privacy-status-pill approved" id="egressPolicyResult">APPROVED &amp; ENCRYPTED</span>
+          </div>
+          <div class="diff-code-wrapper">
+            <pre class="diff-json" id="egressSanitizedJson">// Serializing allow-listed payload...</pre>
+          </div>
+          <div class="diff-card-footer">
+            <div class="hash-display">
+              <span class="hash-label">SHA-256 HASH:</span>
+              <code class="hash-val" id="egressSha256">--</code>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Transmission Audit Log Table -->
+      <div class="egress-audit-box">
+        <div class="audit-box-header">
+          <span class="audit-title">REAL-TIME TRANSMISSION AUDIT LOG (LAST PAYLOADS)</span>
+          <span class="audit-stats" id="egressAuditStats">Policy: STRICT_ALLOW_LIST_ONLY | Secrets Scrubbed: 100%</span>
+        </div>
+        <div class="audit-table-wrap">
+          <table class="data-table audit-table" id="egressAuditTable">
+            <thead>
+              <tr>
+                <th>Payload ID</th>
+                <th>UTC Timestamp</th>
+                <th>Server</th>
+                <th>Policy Result</th>
+                <th>Allowed Fields</th>
+                <th>Blocked / Scrubbed</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="egressAuditTbody">
+              <tr>
+                <td colspan="7" class="empty-state">Streaming audit logs from Tier 1 collector...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
   </main>
 
   <!-- Incident Diagnostic Modal -->
@@ -426,9 +559,9 @@
   </div>
 
   <!-- Scripts -->
-  <script src="js/chart.min.js"></script>
-  <script src="js/charts.js"></script>
-  <script src="js/modal.js"></script>
-  <script src="js/app.js"></script>
+  <script src="js/chart.min.js?v=2.2"></script>
+  <script src="js/charts.js?v=2.2"></script>
+  <script src="js/modal.js?v=2.2"></script>
+  <script src="js/app.js?v=2.2"></script>
 </body>
 </html>

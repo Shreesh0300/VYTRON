@@ -493,11 +493,18 @@ body {
   gap: 8px;
 }
 
+.card-badge-group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
 .mini-metric-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   font-size: 11px;
+  gap: 6px;
 }
 
 .mini-metric-name {
@@ -505,13 +512,15 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 110px;
+  flex: 1;
+  max-width: 135px;
 }
 
 .mini-metric-val {
   font-family: var(--font-mono);
   font-weight: 600;
   color: var(--text-main);
+  flex-shrink: 0;
 }
 
 .mini-metric-val.warn { color: var(--status-amber); }
@@ -1436,6 +1445,336 @@ body {
     grid-template-columns: 1fr;
   }
   .charts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Trust Boundary & Hackathon Mandatory Bar ────────────────────────── */
+
+.trust-boundary-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(90deg, rgba(17, 24, 39, 0.95), rgba(15, 23, 42, 0.98));
+  border-bottom: 1px solid rgba(6, 182, 212, 0.25);
+  padding: 8px 24px;
+  font-size: 11px;
+}
+
+.trust-pill-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.trust-tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+}
+
+.trust-tag.tier1 {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.trust-tag.tier2 {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.trust-arrow {
+  color: var(--accent-cyan);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  opacity: 0.85;
+}
+
+.trust-meta-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.trust-meta-item {
+  color: var(--text-dim);
+}
+
+.trust-meta-item strong {
+  color: #e2e8f0;
+}
+
+/* ── 4 Health States Badges (Hackathon Evaluation Standards) ───────────── */
+
+.health-badge {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 12px;
+  letter-spacing: 0.05em;
+  display: inline-block;
+}
+
+.health-badge.health-excellent,
+.health-badge-card.health-excellent {
+  background: rgba(16, 185, 129, 0.18);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.health-badge.health-good,
+.health-badge-card.health-good {
+  background: rgba(6, 182, 212, 0.18);
+  color: #22d3ee;
+  border: 1px solid rgba(6, 182, 212, 0.35);
+}
+
+.health-badge.health-fair,
+.health-badge-card.health-fair {
+  background: rgba(245, 158, 11, 0.18);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.health-badge.health-poor,
+.health-badge-card.health-poor {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.health-badge-card {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  letter-spacing: 0.04em;
+}
+
+.egress-badge {
+  background: rgba(168, 85, 247, 0.15);
+  color: #c084fc;
+  border: 1px solid rgba(168, 85, 247, 0.35);
+}
+
+.section-desc-note {
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.5;
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--accent-cyan);
+}
+
+/* ── Section E: Egress Proof Live Diff Panel ───────────────────────────── */
+
+.egress-diff-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.egress-diff-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.egress-diff-card.tier1-card {
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.egress-diff-card.tier2-card {
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.diff-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.25);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.diff-header-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.diff-badge {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.diff-badge.tier1-badge { color: #f87171; }
+.diff-badge.tier2-badge { color: #34d399; }
+
+.diff-subtitle {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.privacy-status-pill {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.05em;
+  font-family: var(--font-mono);
+}
+
+.privacy-status-pill.blocked {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.privacy-status-pill.approved {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.diff-code-wrapper {
+  padding: 12px;
+  background: #090d16;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.diff-json {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #cbd5e1;
+  line-height: 1.45;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.diff-card-footer {
+  padding: 10px 16px;
+  background: rgba(0, 0, 0, 0.15);
+  border-top: 1px solid var(--border-subtle);
+  font-size: 11px;
+}
+
+.footer-note {
+  color: #f87171;
+  opacity: 0.9;
+}
+
+.hash-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.hash-label {
+  color: var(--text-dim);
+}
+
+.hash-val {
+  color: #38bdf8;
+  word-break: break-all;
+  background: rgba(56, 189, 248, 0.1);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+/* ── Audit Log Table ─────────────────────────────────────────────────── */
+
+.egress-audit-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 16px;
+}
+
+.audit-box-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.audit-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #e2e8f0;
+  letter-spacing: 0.04em;
+}
+
+.audit-stats {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent-cyan);
+}
+
+.audit-table-wrap {
+  overflow-x: auto;
+}
+
+.audit-table {
+  width: 100%;
+  font-size: 11px;
+}
+
+.audit-table th {
+  padding: 8px 10px;
+  color: var(--text-dim);
+  border-bottom: 1px solid var(--border-subtle);
+  text-align: left;
+}
+
+.audit-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.server-tag {
+  background: rgba(255, 255, 255, 0.06);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.badge-approved {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+}
+
+.status-transmitted {
+  color: #34d399;
+  font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  .egress-diff-grid {
     grid-template-columns: 1fr;
   }
 }
