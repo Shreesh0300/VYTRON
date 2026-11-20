@@ -40,7 +40,7 @@ async def troubleshoot_incident(incident: dict[str, Any]) -> dict[str, Any]:
     # Step 2: Retrieve relevant chunks from ChromaDB
     retrieved_chunks = vector_store.search(
         query_text=query_text,
-        n_results=4
+        n_results=6
     )
 
     # Step 3: Synthesize guidance

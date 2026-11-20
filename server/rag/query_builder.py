@@ -5,6 +5,14 @@ Extracts sanitized incident evidence to construct targeted semantic queries for 
 
 from typing import Any
 
+SERVER_TECH_KEYWORDS = {
+    "APP-01": "Linux application server worker threads process memory heap latency TTFB response time",
+    "DB-01": "PostgreSQL relational database SQL queries locks pg_stat_activity buffer cache iowait",
+    "AUTH-01": "Authentication gateway SSH PAM login attempts credential brute force security tokens",
+    "BACKUP-01": "Backup daemon storage snapshot filesystem disk space transfer throughput archive",
+    "NETWORK-01": "Network interface packet loss bandwidth saturation latency TCP buffer drops ethtool",
+}
+
 METRIC_TOPIC_MAP = {
     "cpu_utilization": "CPU Performance and Thread Starvation",
     "ram_utilization": "Memory Exhaustion, Heap Leaks, and OOM killer",
@@ -49,10 +57,12 @@ class ContextualQueryBuilder:
 
         topic = METRIC_TOPIC_MAP.get(metric_key, f"{metric_name} Troubleshooting")
 
+        tech_context = SERVER_TECH_KEYWORDS.get(server_id, f"{server_type} infrastructure diagnostics")
+
         # Construct dense semantic query
         query_text = (
             f"Troubleshooting and root cause diagnostics for {server_type} ({server_name} {server_id}). "
-            f"{topic}. Observed {metric_name} reached {observed} {unit} breaching {severity.lower()} "
+            f"{topic}. {tech_context}. Observed {metric_name} reached {observed} {unit} breaching {severity.lower()} "
             f"threshold {threshold} {unit}. Diagnostic commands, system inspection, and remediation actions."
         )
 

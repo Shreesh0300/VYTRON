@@ -8,7 +8,7 @@ Zero database dependencies.
 import time
 from datetime import datetime
 from typing import Any
-from server.config import RECOMMENDED_ACTIONS
+from server.config import RECOMMENDED_ACTIONS, SERVERS_CONFIG
 
 PRIORITY_ORDER = {"P1": 1, "P2": 2, "P3": 3, "P4": 4}
 
@@ -43,7 +43,15 @@ class IncidentManager:
             f"Inspect {breach['metric_name']} on {server_id} and stabilize workload parameters."
         )
 
-        direction_sym = ">=" if breach.get("direction") == "above" else "<="
+        srv_conf = SERVERS_CONFIG.get(server_id, {})
+        param_conf = srv_conf.get("parameters", {}).get(metric_key, {})
+        thresh_conf = param_conf.get("thresholds", {})
+        warning_thresh = thresh_conf.get("warning")
+        critical_thresh = thresh_conf.get("critical")
+        baseline = param_conf.get("baseline")
+        direction = breach.get("direction", thresh_conf.get("direction", "above"))
+
+        direction_sym = ">=" if direction == "above" else "<="
         issue_desc = (
             f"{server_id} {breach['metric_name']} breached {breach['breach_level']} threshold: "
             f"{breach['observed_value']} {breach['unit']} ({direction_sym} {breach['threshold_value']} {breach['unit']})"
@@ -53,14 +61,18 @@ class IncidentManager:
             # Deduplicate: update existing open incident with latest values
             inc = self._active_incidents[dedup_key]
             inc["observed_value"] = breach["observed_value"]
+            inc["threshold_value"] = breach["threshold_value"]
+            inc["breach_level"] = breach.get("breach_level", inc.get("breach_level"))
+            inc["issue_description"] = issue_desc
+            inc["warning_threshold"] = warning_thresh if warning_thresh is not None else inc.get("warning_threshold", "Not available")
+            inc["critical_threshold"] = critical_thresh if critical_thresh is not None else inc.get("critical_threshold", "Not available")
+            inc["baseline_value"] = baseline if baseline is not None else inc.get("baseline_value", "Not available")
             inc["last_updated_at"] = now
             inc["last_updated_at_str"] = now_str
             # Upgrade severity/priority if it worsened from warning to critical
             if PRIORITY_ORDER.get(breach["priority"], 99) < PRIORITY_ORDER.get(inc["priority"], 99):
                 inc["severity"] = breach["severity"]
                 inc["priority"] = breach["priority"]
-                inc["threshold_value"] = breach["threshold_value"]
-                inc["issue_description"] = issue_desc
             return inc
 
         # Create new incident
@@ -70,11 +82,17 @@ class IncidentManager:
             "server_id": server_id,
             "server_name": breach["server_name"],
             "server_type": breach["server_type"],
+            "server_category": breach["server_type"],
             "metric_key": metric_key,
             "metric_name": breach["metric_name"],
             "issue_description": issue_desc,
             "observed_value": breach["observed_value"],
             "threshold_value": breach["threshold_value"],
+            "warning_threshold": warning_thresh if warning_thresh is not None else "Not available",
+            "critical_threshold": critical_thresh if critical_thresh is not None else "Not available",
+            "baseline_value": baseline if baseline is not None else "Not available",
+            "direction": direction,
+            "breach_level": breach.get("breach_level", "warning"),
             "unit": breach["unit"],
             "severity": breach["severity"],
             "priority": breach["priority"],

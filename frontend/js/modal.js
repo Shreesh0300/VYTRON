@@ -185,7 +185,20 @@ const IncidentModal = {
 
     // Format 2. Possible Root Causes
     const causesList = (guidance.possible_root_causes || [])
-      .map(c => `<li>${c}</li>`)
+      .map(c => {
+        if (typeof c === "object" && c !== null) {
+          return `
+            <li class="ai-hypo-item">
+              <div class="ai-hypo-title"><span class="ai-hypo-tag">HYPOTHESIS</span> <strong>${c.hypothesis || "Unidentified anomaly"}</strong></div>
+              <div class="ai-hypo-row"><span class="ai-hypo-lbl">Why Possible:</span> <span>${c.why || "Not specified"}</span></div>
+              <div class="ai-hypo-row"><span class="ai-hypo-lbl">Supporting Evidence:</span> <span class="ai-hypo-val">${c.evidence || "Not available"}</span></div>
+              <div class="ai-hypo-row"><span class="ai-hypo-lbl">Missing Evidence Needed:</span> <span>${c.missing_evidence || "Not available"}</span></div>
+              <div class="ai-hypo-row"><span class="ai-hypo-lbl">Operator Verification:</span> <span class="ai-hypo-val">${c.verification || "Inspect system telemetry"}</span></div>
+            </li>
+          `;
+        }
+        return `<li>${c}</li>`;
+      })
       .join("");
     const causesHtml = `
       <div class="ai-card-section">
@@ -193,7 +206,7 @@ const IncidentModal = {
           <span class="ai-card-title">2. Possible Root Causes</span>
           <span class="ai-badge-hypo">Hypotheses — Not Confirmed Facts</span>
         </div>
-        <ul class="ai-list">${causesList || "<li>Requires manual triage.</li>"}</ul>
+        <ul class="ai-hypo-list">${causesList || "<li>Requires manual triage.</li>"}</ul>
       </div>
     `;
 
@@ -223,11 +236,15 @@ const IncidentModal = {
     const commandsList = (guidance.diagnostic_commands || []).map((cmdObj, idx) => {
       const cmdText = typeof cmdObj === "string" ? cmdObj : cmdObj.command;
       const cmdDesc = typeof cmdObj === "object" ? cmdObj.description : "Diagnostic check";
+      const cmdTech = typeof cmdObj === "object" && cmdObj.technology ? `<span class="ai-cmd-tech">${cmdObj.technology}</span>` : "";
       const escapedCmd = cmdText.replace(/"/g, '&quot;');
       return `
         <div class="ai-command-box">
           <div class="ai-command-info">
-            <span class="ai-command-desc">${cmdDesc}</span>
+            <div style="display:flex; align-items:center; gap:6px; margin-bottom:3px;">
+              ${cmdTech}
+              <span class="ai-command-desc">${cmdDesc}</span>
+            </div>
             <code class="ai-command-code">${cmdText}</code>
           </div>
           <button class="btn-copy-cmd" onclick="IncidentModal.copyCommand('${escapedCmd}', this)">Copy</button>
