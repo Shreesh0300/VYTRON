@@ -177,6 +177,17 @@ function renderOverview(overview, activeScenario, dataFreshness) {
     if (barFreshness && dataFreshness.utc_timestamp) {
       barFreshness.textContent = `${dataFreshness.status || 'REAL-TIME'} (${dataFreshness.utc_timestamp.slice(11, 19)} UTC)`;
     }
+
+    const barCollector = document.getElementById("barCollectorStatus");
+    if (barCollector && dataFreshness.collector_status) {
+      if (dataFreshness.collector_status === "BUFFERING_OFFLINE") {
+        barCollector.textContent = "BUFFERING (OFFLINE)";
+        barCollector.className = "text-amber";
+      } else {
+        barCollector.textContent = "ONLINE (COLLECTOR-01)";
+        barCollector.className = "text-green";
+      }
+    }
   }
 
   if (prioBadge) {
@@ -588,11 +599,18 @@ function renderEgressProof(egressProof, dataFreshness) {
   }
 
   if (auditTbody && history.length > 0) {
-    auditTbody.innerHTML = history.slice(-8).reverse().map(item => {
+    auditTbody.innerHTML = history.slice(0, 8).map(item => {
       const blockedCount = item.blocked_fields ? item.blocked_fields.length : 0;
       const allowedCount = item.allowed_fields ? item.allowed_fields.length : 0;
       const rawTs = item.timestamp_utc || item.timestamp;
       const timeStr = rawTs ? rawTs.slice(11, 19) : "--:--:--";
+      let statusHtml = '<span class="status-transmitted">✓ Transmitted</span>';
+      if (item.transmission_status === "BUFFERED_LOCALLY") {
+        statusHtml = '<span style="color:#fbbf24; font-weight:700;">⏳ Buffered</span>';
+      } else if (item.transmission_status === "REPLAYED_AFTER_OUTAGE") {
+        statusHtml = '<span style="color:#22d3ee; font-weight:700;">⚡ Replayed (0 Loss)</span>';
+      }
+
       return `
         <tr>
           <td class="font-mono text-cyan">${item.payload_id || 'PAYLOAD-xxxx'}</td>
@@ -601,7 +619,7 @@ function renderEgressProof(egressProof, dataFreshness) {
           <td><span class="badge-approved">${item.policy_result}</span></td>
           <td class="text-green">${allowedCount} fields allowed</td>
           <td class="text-red">${blockedCount} sensitive keys blocked</td>
-          <td><span class="status-transmitted">✓ Transmitted</span></td>
+          <td>${statusHtml}</td>
         </tr>
       `;
     }).join("");

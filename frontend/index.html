@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VYTRON — Infrastructure Monitoring & Incident Prioritization</title>
-  <link rel="stylesheet" href="css/style.css?v=2.2">
+  <link rel="stylesheet" href="css/style.css?v=2.3">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -43,6 +43,8 @@
       <span class="trust-tag tier2">TIER 2: Central Platform (Metadata Only)</span>
     </div>
     <div class="trust-meta-group">
+      <span class="trust-meta-item">COLLECTOR: <strong class="text-green" id="barCollectorStatus">ONLINE (COLLECTOR-01)</strong></span>
+      <span class="trust-meta-sep">•</span>
       <span class="trust-meta-item">TENANT: <strong id="barTenantId">TENANT-01</strong></span>
       <span class="trust-meta-sep">•</span>
       <span class="trust-meta-item">INGEST LATENCY: <strong class="text-green" id="barLatency">1.2s (Target ≤10s)</strong></span>
@@ -385,6 +387,11 @@
         <strong>Trust Boundary Enforcement:</strong> Demonstrates that raw application logs, database passwords, and API secrets remain strictly inside the local customer environment (Tier 1). Only approved, allow-listed metadata with pseudonymous IDs crosses into the SaaS platform (Tier 2).
       </p>
 
+      <div class="policy-pills-bar">
+        <span class="policy-pill allowed-pill">✓ STRICT ALLOW-LIST (12 Fields): payload_id, timestamp_utc, tenant_id, collector_id, server_id, server_name, server_type, health_state, health_reason, metrics, severity, status</span>
+        <span class="policy-pill blocked-pill">🚫 DROPPED SENSITIVE KEYS: passwords, secrets, tokens, keys, raw_sql, credentials, internal_ip, gateway, community</span>
+      </div>
+
       <!-- Live Side-by-Side Comparison -->
       <div class="egress-diff-grid">
         <!-- Left: Tier 1 Raw Local Telemetry -->
@@ -559,9 +566,9 @@
   </div>
 
   <!-- Scripts -->
-  <script src="js/chart.min.js?v=2.2"></script>
-  <script src="js/charts.js?v=2.2"></script>
-  <script src="js/modal.js?v=2.2"></script>
-  <script src="js/app.js?v=2.2"></script>
+  <script src="js/chart.min.js?v=2.3"></script>
+  <script src="js/charts.js?v=2.3"></script>
+  <script src="js/modal.js?v=2.3"></script>
+  <script src="js/app.js?v=2.3"></script>
 </body>
 </html>

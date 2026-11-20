@@ -304,8 +304,11 @@ class InfrastructureSimulator:
             highest_prio_item = priority_queue[0]
             highest_prio_str = highest_prio_item["priority"]
 
+        outage_active = self.egress_engine._outage_simulated
         cluster_health = "EXCELLENT"
-        if poor_count > 0:
+        if outage_active:
+            cluster_health = "POOR"  # Per Hackathon Spec: Stale/missing data or collector outage downgrades state to POOR
+        elif poor_count > 0:
             cluster_health = "POOR"
         elif fair_count > 0:
             cluster_health = "FAIR"
@@ -324,6 +327,9 @@ class InfrastructureSimulator:
             }
 
         now_utc = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        is_stale = outage_active
+        freshness_status = "STALE (BUFFERING)" if outage_active else "REAL-TIME"
+        collector_state = "BUFFERING_OFFLINE" if outage_active else "ONLINE"
 
         return {
             "timestamp": time.time(),
@@ -334,17 +340,18 @@ class InfrastructureSimulator:
                 "normal_count": normal_count,
                 "warning_count": warning_count,
                 "critical_count": critical_count,
-                "excellent_count": excellent_count,
-                "good_count": good_count,
-                "fair_count": fair_count,
-                "poor_count": poor_count,
+                "excellent_count": 0 if outage_active else excellent_count,
+                "good_count": 0 if outage_active else good_count,
+                "fair_count": 0 if outage_active else fair_count,
+                "poor_count": len(self.servers) if outage_active else poor_count,
                 "cluster_health": cluster_health,
                 "active_incidents": len(priority_queue),
                 "highest_priority": highest_prio_str,
                 "highest_priority_incident": highest_prio_item,
             },
             "data_freshness": {
-                "status": "REAL-TIME",
+                "status": freshness_status,
+                "collector_status": collector_state,
                 "latency_seconds": 1.2,
                 "ingest_latency_seconds": 1.2,
                 "dashboard_latency_seconds": 1.2,
@@ -352,7 +359,7 @@ class InfrastructureSimulator:
                 "target_seconds": 10.0,
                 "alert_target_seconds": 15.0,
                 "stale_threshold_seconds": 60.0,
-                "is_stale": False,
+                "is_stale": is_stale,
                 "tenant_id": self.egress_engine.tenant_id,
                 "collector_id": self.egress_engine.collector_id,
                 "region": "us-east-1 (UTC)",

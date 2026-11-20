@@ -175,6 +175,9 @@ class EgressProofEngine:
 
     def get_history(self, limit: int = 15) -> list[dict[str, Any]]:
         """Returns recent egress history records for the audit log table."""
+        if self._outage_simulated and self._buffer:
+            combined = list(reversed(self._buffer)) + list(self._egress_history)
+            return combined[:limit]
         return self._egress_history[:limit]
 
     def get_stats(self) -> dict[str, Any]:
