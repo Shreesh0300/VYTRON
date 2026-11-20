@@ -3,6 +3,7 @@
  * Features:
  * - 10 Independent simulated live server profiles
  * - Interactive Judge Demo Mode scenario triggers
+ * - Quick Server Navigation Tabs Bar (click any server tab to switch)
  * - Live infrastructure fleet inventory with status & feed vitality
  * - Detailed server view with 10 real-time metrics, 4 Chart.js performance graphs
  * - Dynamic live operational log stream
@@ -10,7 +11,6 @@
  */
 
 let currentSelectedServer = "APP-01";
-let serverPollInterval = null;
 
 // 4 Chart.js Instances
 let chartCpuMem = null;
@@ -56,6 +56,16 @@ function renderFeedBadge(feed) {
     return `<span class="badge badge-delayed">DELAYED</span>`;
   } else {
     return `<span class="badge badge-lost">LOST</span>`;
+  }
+}
+
+/**
+ * Scroll smoothly back to top fleet table
+ */
+function scrollToFleetTable() {
+  const table = document.getElementById("page-servers");
+  if (table) {
+    table.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 }
 
@@ -108,7 +118,26 @@ async function loadServers() {
     `;
   }
 
-  // 3. Render Fleet Inventory Table
+  // 3. Render Quick Server Navigation Tabs Bar
+  const tabsContainer = document.getElementById("server-selector-tabs");
+  if (tabsContainer) {
+    tabsContainer.innerHTML = servers.map(s => {
+      const isSelected = s.server_id === currentSelectedServer;
+      const st = (s.status || "ONLINE").toUpperCase();
+      let dotColor = "#10b981";
+      if (st === "WARNING") dotColor = "#f59e0b";
+      else if (st === "CRITICAL" || st === "OFFLINE") dotColor = "#ef4444";
+
+      return `
+        <button class="server-tab-btn ${isSelected ? 'active-tab' : ''}" onclick="selectServer('${s.server_id}')">
+          <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: ${dotColor};"></span>
+          <span>${s.server_id}</span>
+        </button>
+      `;
+    }).join("");
+  }
+
+  // 4. Render Fleet Inventory Table
   const tbody = document.getElementById("servers-list-table");
   if (tbody) {
     tbody.innerHTML = servers.map(s => {
@@ -121,7 +150,7 @@ async function loadServers() {
       const isSelected = s.server_id === currentSelectedServer;
 
       return `
-        <tr style="cursor: pointer;" onclick="selectServer('${s.server_id}')" class="${isSelected ? 'selected-row' : ''}">
+        <tr data-server-id="${s.server_id}" style="cursor: pointer;" onclick="selectServer('${s.server_id}')" class="${isSelected ? 'selected-row' : ''}">
           <td><strong style="color: #60a5fa;">${s.server_id}</strong></td>
           <td>
             <div style="font-weight: 600;">${s.server_name}</div>
@@ -141,7 +170,7 @@ async function loadServers() {
           <td>${formatTimestamp(s.last_metric_time)}</td>
           <td>
             <button class="btn btn-sm" onclick="selectServer('${s.server_id}'); event.stopPropagation();">
-              Inspect
+              Inspect ${s.server_id}
             </button>
           </td>
         </tr>
@@ -149,27 +178,53 @@ async function loadServers() {
     }).join("");
   }
 
-  // 4. Load Detailed View for Current Selection
+  // 5. Load Detailed View for Current Selection
   await loadServerDetail(currentSelectedServer);
 }
 
 /**
- * Handle user server selection
+ * Handle user server selection: updates tabs, table highlight, loads data, and scrolls into view
  */
 function selectServer(serverId) {
   currentSelectedServer = serverId;
+
+  // 1. Update Table Row Selection Highlight
   const tbody = document.getElementById("servers-list-table");
   if (tbody) {
     const rows = tbody.querySelectorAll("tr");
     rows.forEach(r => {
-      if (r.innerHTML.includes(`<strong>${serverId}</strong>`)) {
+      if (r.getAttribute("data-server-id") === serverId) {
         r.classList.add("selected-row");
       } else {
         r.classList.remove("selected-row");
       }
     });
   }
+
+  // 2. Update Tabs Bar Highlight
+  const tabsContainer = document.getElementById("server-selector-tabs");
+  if (tabsContainer) {
+    const tabBtns = tabsContainer.querySelectorAll(".server-tab-btn");
+    tabBtns.forEach(btn => {
+      if (btn.innerText.includes(serverId)) {
+        btn.classList.add("active-tab");
+      } else {
+        btn.classList.remove("active-tab");
+      }
+    });
+  }
+
+  // 3. Immediately Load Server Detail
   loadServerDetail(serverId);
+
+  // 4. Smoothly bring the detail section into view with a visual pulse
+  const detailSec = document.getElementById("server-detail-section");
+  if (detailSec) {
+    detailSec.scrollIntoView({ behavior: "smooth", block: "start" });
+    detailSec.classList.remove("highlight-pulse");
+    void detailSec.offsetWidth; // trigger reflow
+    detailSec.classList.add("highlight-pulse");
+  }
 }
 
 /**
@@ -187,10 +242,21 @@ async function loadServerDetail(serverId) {
   if (elName) elName.innerText = detail.server_name;
 
   const elRole = document.getElementById("detail-server-role");
-  if (elRole) elRole.innerText = `${detail.role} (${detail.server_type.toUpperCase()})`;
+  if (elRole) elRole.innerText = `${detail.role} — ${detail.server_type.toUpperCase()}`;
 
   const elStatus = document.getElementById("detail-server-status-badge");
-  if (elStatus) elStatus.outerHTML = `<span id="detail-server-status-badge">${renderServerStatusBadge(detail.status)}</span>`;
+  if (elStatus) {
+    const st = (detail.status || "ONLINE").toLowerCase();
+    elStatus.className = `badge badge-${st}`;
+    elStatus.innerText = st.toUpperCase();
+  }
+
+  const elFeed = document.getElementById("detail-server-feed-badge");
+  if (elFeed) {
+    const feed = (detail.feed_status || "ACTIVE").toLowerCase();
+    elFeed.className = `badge badge-${feed}`;
+    elFeed.innerText = `FEED ${feed.toUpperCase()}`;
+  }
 
   const elActivity = document.getElementById("detail-server-activity");
   if (elActivity) elActivity.innerText = detail.activity || "Serving operational workload";
@@ -324,7 +390,9 @@ async function renderServerCharts(serverId) {
 
     if (chartCpuMem) {
       chartCpuMem.data.labels = labels;
+      chartCpuMem.data.datasets[0].label = `${serverId} CPU Usage (%)`;
       chartCpuMem.data.datasets[0].data = cpuVals;
+      chartCpuMem.data.datasets[1].label = `${serverId} Memory Usage (%)`;
       chartCpuMem.data.datasets[1].data = memVals;
       chartCpuMem.update();
     } else {
@@ -334,7 +402,7 @@ async function renderServerCharts(serverId) {
           labels: labels,
           datasets: [
             {
-              label: "CPU Usage (%)",
+              label: `${serverId} CPU Usage (%)`,
               data: cpuVals,
               borderColor: "#ef4444",
               backgroundColor: "rgba(239, 68, 68, 0.12)",
@@ -343,7 +411,7 @@ async function renderServerCharts(serverId) {
               pointRadius: 2,
             },
             {
-              label: "Memory Usage (%)",
+              label: `${serverId} Memory Usage (%)`,
               data: memVals,
               borderColor: "#3b82f6",
               backgroundColor: "rgba(59, 130, 246, 0.12)",
@@ -372,7 +440,9 @@ async function renderServerCharts(serverId) {
 
     if (chartNetworkThroughput) {
       chartNetworkThroughput.data.labels = labels;
+      chartNetworkThroughput.data.datasets[0].label = `${serverId} Upload (KB/s)`;
       chartNetworkThroughput.data.datasets[0].data = upVals;
+      chartNetworkThroughput.data.datasets[1].label = `${serverId} Download (KB/s)`;
       chartNetworkThroughput.data.datasets[1].data = downVals;
       chartNetworkThroughput.update();
     } else {
@@ -382,7 +452,7 @@ async function renderServerCharts(serverId) {
           labels: labels,
           datasets: [
             {
-              label: "Upload (KB/s)",
+              label: `${serverId} Upload (KB/s)`,
               data: upVals,
               borderColor: "#06b6d4",
               backgroundColor: "rgba(6, 182, 212, 0.1)",
@@ -391,7 +461,7 @@ async function renderServerCharts(serverId) {
               pointRadius: 2,
             },
             {
-              label: "Download (KB/s)",
+              label: `${serverId} Download (KB/s)`,
               data: downVals,
               borderColor: "#8b5cf6",
               backgroundColor: "rgba(139, 92, 246, 0.1)",
@@ -414,7 +484,9 @@ async function renderServerCharts(serverId) {
 
     if (chartWorkload) {
       chartWorkload.data.labels = labels;
+      chartWorkload.data.datasets[0].label = `${serverId} Response Time (ms)`;
       chartWorkload.data.datasets[0].data = respVals;
+      chartWorkload.data.datasets[1].label = `${serverId} Request Rate (req/s)`;
       chartWorkload.data.datasets[1].data = reqVals;
       chartWorkload.update();
     } else {
@@ -424,7 +496,7 @@ async function renderServerCharts(serverId) {
           labels: labels,
           datasets: [
             {
-              label: "Response Time (ms)",
+              label: `${serverId} Response Time (ms)`,
               data: respVals,
               borderColor: "#f59e0b",
               backgroundColor: "rgba(245, 158, 11, 0.1)",
@@ -434,7 +506,7 @@ async function renderServerCharts(serverId) {
               yAxisID: "y",
             },
             {
-              label: "Request Rate (req/s)",
+              label: `${serverId} Request Rate (req/s)`,
               data: reqVals,
               borderColor: "#10b981",
               backgroundColor: "transparent",
@@ -473,7 +545,9 @@ async function renderServerCharts(serverId) {
 
     if (chartLatencyErrors) {
       chartLatencyErrors.data.labels = labels;
+      chartLatencyErrors.data.datasets[0].label = `${serverId} Network Latency (ms)`;
       chartLatencyErrors.data.datasets[0].data = latVals;
+      chartLatencyErrors.data.datasets[1].label = `${serverId} Error Rate (%)`;
       chartLatencyErrors.data.datasets[1].data = errVals;
       chartLatencyErrors.update();
     } else {
@@ -483,7 +557,7 @@ async function renderServerCharts(serverId) {
           labels: labels,
           datasets: [
             {
-              label: "Network Latency (ms)",
+              label: `${serverId} Network Latency (ms)`,
               data: latVals,
               borderColor: "#f97316",
               backgroundColor: "rgba(249, 115, 22, 0.1)",
@@ -493,7 +567,7 @@ async function renderServerCharts(serverId) {
               yAxisID: "y",
             },
             {
-              label: "Error Rate (%)",
+              label: `${serverId} Error Rate (%)`,
               data: errVals,
               borderColor: "#f43f5e",
               backgroundColor: "rgba(244, 63, 94, 0.2)",
@@ -533,7 +607,6 @@ async function triggerDemoScenario(scenarioName) {
   const res = await apiPost("/api/demo/scenario", { scenario: scenarioName });
   if (res) {
     showToast(`Scenario active: ${res.active_scenario || scenarioName}`, "success");
-    // Fast refresh
     setTimeout(() => { loadServers(); }, 500);
   }
 }
@@ -557,5 +630,6 @@ async function sendServerControl(action, metric = null, value = null) {
 // Window exports
 window.loadServers = loadServers;
 window.selectServer = selectServer;
+window.scrollToFleetTable = scrollToFleetTable;
 window.triggerDemoScenario = triggerDemoScenario;
 window.sendServerControl = sendServerControl;

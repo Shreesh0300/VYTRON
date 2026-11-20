@@ -467,3 +467,57 @@
 .log-lvl-warning { color: #fbbf24; font-weight: 600; flex-shrink: 0; }
 .log-lvl-critical, .log-lvl-error { color: #f87171; font-weight: 600; flex-shrink: 0; }
 .log-msg { color: #e5e7eb; word-break: break-all; }
+
+/* ── Server Quick-Select Tab Bar & Focus Animations ────────────────────── */
+
+.server-tabs-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding: 0.75rem 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  margin-bottom: 1.25rem;
+  scrollbar-width: thin;
+}
+
+.server-tab-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  padding: 0.45rem 0.85rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.server-tab-btn:hover {
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--text-primary);
+  border-color: var(--accent-color);
+}
+
+.server-tab-btn.active-tab {
+  background: #3b82f6 !important;
+  color: #ffffff !important;
+  border-color: #60a5fa !important;
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.5);
+}
+
+.highlight-pulse {
+  animation: focusPulse 1.2s ease;
+}
+
+@keyframes focusPulse {
+  0% { box-shadow: 0 0 0px rgba(59, 130, 246, 0); }
+  30% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.8); }
+  100% { box-shadow: 0 0 0px rgba(59, 130, 246, 0); }
+}
