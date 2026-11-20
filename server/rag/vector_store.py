@@ -150,7 +150,7 @@ class VectorStore:
         return output
 
     def get_all_sources(self) -> list[dict[str, Any]]:
-        """Returns catalog of all loaded knowledge base documents."""
+        """Returns catalog of all loaded knowledge base documents (Markdown and Official PDF manuals)."""
         loader = DocumentLoader(KNOWLEDGE_BASE_DIR)
         docs = loader.load_all()
         sources = []
@@ -164,4 +164,41 @@ class VectorStore:
                 "category": m.get("category", "General"),
                 "server_relevance": m.get("server_relevance", ["ALL"]),
             })
+
+        # Add official technical PDF sources from knowledge taxonomy
+        pdf_sources = [
+            {
+                "doc_name": "canonical-ubuntu-server-documentation-readthedocs-hosted-com-en-latest.pdf",
+                "title": "Ubuntu Server Official Documentation",
+                "source": "Canonical Ubuntu Documentation",
+                "url": "https://ubuntu.com/server/docs",
+                "category": "Linux & OS Operations",
+                "server_relevance": ["APP-01", "DB-01", "AUTH-01", "BACKUP-01", "NETWORK-01"],
+            },
+            {
+                "doc_name": "postgresql-19-A4.pdf",
+                "title": "PostgreSQL Official Technical Manual",
+                "source": "The PostgreSQL Global Development Group",
+                "url": "https://www.postgresql.org/docs/",
+                "category": "Database & Query Performance",
+                "server_relevance": ["DB-01", "APP-01"],
+            },
+            {
+                "doc_name": "Reference.pdf",
+                "title": "Kubernetes API & Architecture Reference",
+                "source": "Kubernetes Official Documentation (CNCF)",
+                "url": "https://kubernetes.io/docs/reference/",
+                "category": "Container Orchestration & Networking",
+                "server_relevance": ["APP-01", "NETWORK-01", "AUTH-01"],
+            },
+            {
+                "doc_name": "troubleshoot-windows-server.pdf",
+                "title": "Microsoft Windows Server Troubleshooting Guide",
+                "source": "Microsoft Learn Documentation",
+                "url": "https://learn.microsoft.com/en-us/troubleshoot/windows-server/",
+                "category": "Windows Server & Enterprise Networking",
+                "server_relevance": ["APP-01", "NETWORK-01", "AUTH-01", "BACKUP-01"],
+            },
+        ]
+        sources.extend(pdf_sources)
         return sources

@@ -120,26 +120,49 @@ class DocumentLoader:
             return None
 
     def _load_pdf(self, fpath: str, fname: str) -> dict[str, Any] | None:
-        # Fallback PDF extraction
+        """High-performance PDF loader using PyMuPDF (fitz) with pypdf fallback."""
         try:
-            import pypdf
-            reader = pypdf.PdfReader(fpath)
-            pages = [p.extract_text() for p in reader.pages if p.extract_text()]
+            try:
+                import pymupdf as fitz
+            except ImportError:
+                import fitz
+            doc = fitz.open(fpath)
+            pages = [p.get_text() for p in doc if p.get_text().strip()]
             content = "\n\n".join(pages)
+            doc.close()
             return {
                 "doc_name": fname,
                 "metadata": {
                     "doc_name": fname,
-                    "title": fname.replace(".pdf", "").title(),
-                    "source": "PDF Technical Manual",
+                    "title": fname.replace(".pdf", "").replace("-", " ").title(),
+                    "source": "Official Technical PDF Manual",
                     "url": f"https://vytron.aiops/docs/{fname}",
-                    "category": "PDF Manual",
+                    "category": "Official Documentation",
                     "server_relevance": ["ALL"],
                 },
                 "content": content,
             }
         except Exception:
-            return None
+            try:
+                import pypdf
+                reader = pypdf.PdfReader(fpath)
+                pages = [p.extract_text() for p in reader.pages if p.extract_text()]
+                content = "\n\n".join(pages)
+                return {
+                    "doc_name": fname,
+                    "metadata": {
+                        "doc_name": fname,
+                        "title": fname.replace(".pdf", "").replace("-", " ").title(),
+                        "source": "PDF Technical Manual",
+                        "url": f"https://vytron.aiops/docs/{fname}",
+                        "category": "PDF Manual",
+                        "server_relevance": ["ALL"],
+                    },
+                    "content": content,
+                }
+            except Exception as e:
+                print(f"[DocumentLoader] Error reading PDF {fname}: {e}")
+                return None
 
 
 class TextChunker:
