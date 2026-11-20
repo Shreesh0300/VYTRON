@@ -1118,11 +1118,6 @@ body {
 
 /* ── Keyframe Animations ───────────────────────────────────────────────── */
 
-.data-table tr.selected-row {
-  background: rgba(6, 182, 212, 0.16) !important;
-  border-left: 3px solid var(--accent-cyan) !important;
-}
-
 @keyframes pulse-dot {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.4; transform: scale(0.85); }
