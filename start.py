@@ -44,6 +44,9 @@ RED = "\033[91m"
 
 def start_services():
     """Launch all services as subprocesses."""
+    # Ensure any lingering processes on ports 8000, 8001, 8002, 5500 are stopped first
+    stop_services()
+
     processes = []
     env = os.environ.copy()
     env["PYTHONPATH"] = ROOT
@@ -124,9 +127,9 @@ def start_services():
 
 
 def stop_services():
-    """Kill any running uvicorn processes on our ports."""
-    import socket
+    """Kill any running processes on our ports."""
     ports = [8000, 8001, 8002, 5500]
+    pids_killed = set()
     for port in ports:
         try:
             if sys.platform == "win32":
@@ -135,13 +138,19 @@ def stop_services():
                     capture_output=True, text=True
                 )
                 for line in result.stdout.splitlines():
-                    if f":{port}" in line and "LISTENING" in line:
-                        pid = line.strip().split()[-1]
-                        subprocess.run(["taskkill", "/F", "/PID", pid],
-                                       capture_output=True)
-                        print(f"  Killed process on port {port} (PID {pid})")
+                    if f":{port}" in line:
+                        parts = line.strip().split()
+                        if parts:
+                            pid = parts[-1]
+                            if pid.isdigit() and pid != "0" and pid not in pids_killed:
+                                pids_killed.add(pid)
+                                subprocess.run(["taskkill", "/F", "/PID", pid],
+                                               capture_output=True)
+                                print(f"  Killed previous process on port {port} (PID {pid})")
         except Exception as e:
             print(f"  Could not stop port {port}: {e}")
+    if pids_killed:
+        time.sleep(1)
 
 
 if __name__ == "__main__":

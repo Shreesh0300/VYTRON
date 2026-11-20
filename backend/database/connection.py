@@ -88,18 +88,20 @@ def init_db():
                 )
                 db.add(server)
 
-        # Audit initial bootstrap
-        audit = AuditLog(
-            audit_id="BOOTSTRAP-01",
-            tenant_id=DEFAULT_TENANT_ID,
-            actor="system",
-            action="platform_init",
-            resource_type="system",
-            resource_id="platform.db",
-            timestamp=datetime.now(timezone.utc).isoformat(),
-            details="Initialized platform database tables and baseline seeds",
-        )
-        db.add(audit)
+        # Audit initial bootstrap (only if not already recorded)
+        existing_audit = db.query(AuditLog).filter_by(audit_id="BOOTSTRAP-01").first()
+        if not existing_audit:
+            audit = AuditLog(
+                audit_id="BOOTSTRAP-01",
+                tenant_id=DEFAULT_TENANT_ID,
+                actor="system",
+                action="platform_init",
+                resource_type="system",
+                resource_id="platform.db",
+                timestamp=datetime.now(timezone.utc).isoformat(),
+                details="Initialized platform database tables and baseline seeds",
+            )
+            db.add(audit)
         db.commit()
     finally:
         db.close()
