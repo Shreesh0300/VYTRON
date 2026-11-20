@@ -1,7 +1,9 @@
 __pycache__/
 *.py[cod]
 *.db
+*.db-journal
 .env
+logs/
 .venv/
 venv/
 *.egg-info/

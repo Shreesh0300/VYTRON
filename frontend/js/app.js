@@ -7,10 +7,10 @@ document.addEventListener("DOMContentLoaded", () => {
   initLucide();
   loadCurrentPage();
   
-  // Auto-refresh polling every 5 seconds
+  // Auto-refresh polling every 3 seconds for smooth real-time telemetry
   setInterval(() => {
     loadCurrentPage();
-  }, 5000);
+  }, 3000);
 });
 
 function initNavigation() {

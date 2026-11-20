@@ -20,7 +20,7 @@ from backend.database.connection import init_db, SessionLocal
 from backend.models.platform_models import Collector, AuditLog
 from backend.api.telemetry import router as telemetry_router
 from backend.api.collectors import router as collectors_router
-from backend.api.servers import servers_router, metrics_router
+from backend.api.servers import servers_router, metrics_router, demo_router
 from backend.api.alerts import alerts_router, incidents_router, aiops_router
 from backend.api.remediation import rec_router, remediation_router
 from backend.api.egress import egress_router, audit_router
@@ -94,6 +94,7 @@ app.include_router(telemetry_router)
 app.include_router(collectors_router)
 app.include_router(servers_router)
 app.include_router(metrics_router)
+app.include_router(demo_router)
 app.include_router(alerts_router)
 app.include_router(incidents_router)
 app.include_router(aiops_router)

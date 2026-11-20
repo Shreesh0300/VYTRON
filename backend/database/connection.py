@@ -87,6 +87,9 @@ def init_db():
                     status="excellent",
                 )
                 db.add(server)
+            else:
+                server.server_name = s_info["name"]
+                server.server_type = s_info["type"]
 
         # Audit initial bootstrap (only if not already recorded)
         existing_audit = db.query(AuditLog).filter_by(audit_id="BOOTSTRAP-01").first()

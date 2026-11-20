@@ -72,6 +72,8 @@ RULE_THRESHOLDS = {
     "packet_loss": {"warning": 3.0, "critical": 5.0},          # %
     "failed_logins": {"warning": 5, "critical": 10},            # per minute
     "service_availability": {"warning": 0, "critical": 0},      # 0 = unavailable
+    "error_rate": {"warning": 5.0, "critical": 15.0},          # %
+    "response_time": {"warning": 250.0, "critical": 500.0},     # ms
 }
 
 # ── Statistical Detection Config ─────────────────────────────────────────
@@ -120,16 +122,16 @@ SCENARIO_INJECTION_INTERVAL = 30   # seconds between scenario injections
 # ── Server Profiles ──────────────────────────────────────────────────────
 
 SERVER_PROFILES = {
-    "APP-01":      {"name": "Application Server",           "type": "application"},
-    "DB-01":       {"name": "Database Server",              "type": "database"},
-    "AUTH-01":     {"name": "Authentication Server",        "type": "authentication"},
-    "WEB-01":      {"name": "Web Server",                   "type": "web"},
-    "STORAGE-01":  {"name": "Storage Server",               "type": "storage"},
-    "APP-02":      {"name": "Secondary Application Server", "type": "application"},
-    "DB-02":       {"name": "Secondary Database Server",    "type": "database"},
-    "NETWORK-01":  {"name": "Network Service",              "type": "network"},
-    "BACKUP-01":   {"name": "Backup Server",                "type": "backup"},
-    "INTERNAL-01": {"name": "Internal Service Server",      "type": "internal"},
+    "APP-01":      {"name": "Application Server 01",   "type": "application",    "role": "Main application processing"},
+    "DB-01":       {"name": "Database Server 01",      "type": "database",       "role": "Database operations"},
+    "AUTH-01":     {"name": "Authentication Server",  "type": "authentication", "role": "Login and authentication"},
+    "WEB-01":      {"name": "Web Server 01",          "type": "web",            "role": "HTTP requests and web traffic"},
+    "STORAGE-01":  {"name": "Storage Server",         "type": "storage",        "role": "File storage and retrieval"},
+    "APP-02":      {"name": "Application Server 02",   "type": "application",    "role": "Background jobs and processing"},
+    "DB-02":       {"name": "Database Server 02",      "type": "database",       "role": "Database replication and queries"},
+    "NETWORK-01":  {"name": "Network Server",          "type": "network",        "role": "Network traffic and connectivity"},
+    "BACKUP-01":   {"name": "Backup Server",           "type": "backup",         "role": "Backup and recovery operations"},
+    "INTERNAL-01": {"name": "Internal Services Server", "type": "internal",       "role": "Internal APIs and services"},
 }
 
 # ── Health State Thresholds ──────────────────────────────────────────────

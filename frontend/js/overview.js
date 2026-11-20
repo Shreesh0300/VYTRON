@@ -43,8 +43,12 @@ async function loadOverview() {
   let states = { excellent: 0, good: 0, fair: 0, poor: 0 };
   if (servers) {
     servers.forEach(s => {
-      const st = (s.status || "good").toLowerCase();
+      let st = (s.status || "good").toLowerCase();
+      if (st === "online") st = "excellent";
+      else if (st === "warning") st = "fair";
+      else if (st === "critical" || st === "offline") st = "poor";
       if (states[st] !== undefined) states[st]++;
+      else states["good"]++;
     });
   }
 
