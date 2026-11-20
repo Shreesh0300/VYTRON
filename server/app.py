@@ -16,6 +16,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from server.simulator import InfrastructureSimulator
+from server.rag.pipeline import troubleshoot_incident, get_vector_store
 
 # Global simulator instance
 simulator = InfrastructureSimulator()
@@ -83,6 +84,10 @@ class StartSimulationRequest(BaseModel):
     scenario: Optional[str] = "auto"
     server_count: Optional[int] = None
     mode: Optional[str] = "random"
+
+class TroubleshootRequest(BaseModel):
+    incident_id: Optional[str] = None
+    incident: Optional[dict] = None
 
 # ── API Endpoints ───────────────────────────────────────────────────────
 
@@ -155,6 +160,38 @@ def get_incidents():
         "priority_queue": snapshot["priority_queue"],
         "notifications": snapshot["notifications"],
         "overview": snapshot["overview"],
+    }
+
+@app.post("/api/aiops/troubleshoot")
+async def api_troubleshoot(req: TroubleshootRequest):
+    """
+    RAG-powered AI Troubleshooting:
+    Retrieves relevant technical documentation chunks from ChromaDB and synthesizes
+    8-section root-cause investigation guidance using the LLM / grounded expert engine.
+    """
+    target_incident = req.incident
+    if not target_incident and req.incident_id:
+        snapshot = simulator.get_snapshot()
+        candidates = snapshot.get("priority_queue", []) + snapshot.get("notifications", [])
+        for c in candidates:
+            if c.get("incident_id") == req.incident_id:
+                target_incident = c
+                break
+
+    if not target_incident:
+        raise HTTPException(status_code=404, detail="Incident not found or no incident data provided")
+
+    result = await troubleshoot_incident(target_incident)
+    return result
+
+@app.get("/api/knowledge/sources")
+def get_knowledge_sources():
+    """Returns catalog of loaded technical troubleshooting documentation."""
+    store = get_vector_store()
+    return {
+        "sources": store.get_all_sources(),
+        "total_chunks": store.collection.count(),
+        "collection": "vytron_troubleshooting_kb"
     }
 
 # ── WebSocket Telemetry ─────────────────────────────────────────────────

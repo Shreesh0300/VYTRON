@@ -385,6 +385,38 @@
           </div>
           <p class="action-text" id="modalRecommendedAction">Recommended action text...</p>
         </div>
+
+        <!-- RAG AI Troubleshooting Investigation Section -->
+        <div class="ai-troubleshoot-box" id="modalAiSection">
+          <div class="ai-box-header">
+            <div class="ai-header-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2">
+                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+              </svg>
+              <span>AI TROUBLESHOOTING & ROOT CAUSE ANALYSIS (RAG)</span>
+            </div>
+            <button class="btn btn-ai-investigate" id="btnInvestigateAi">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg>
+              Investigate with AI
+            </button>
+          </div>
+
+          <!-- Loading State -->
+          <div class="ai-loading-container" id="modalAiLoading" style="display: none;">
+            <div class="ai-spinner"></div>
+            <div class="ai-loading-text">
+              <p><strong>Querying ChromaDB Vector Knowledge Base...</strong></p>
+              <p class="ai-loading-sub">Retrieving technical documentation & synthesizing 8-section investigation guidance</p>
+            </div>
+          </div>
+
+          <!-- Output Container -->
+          <div class="ai-content-container" id="modalAiContent" style="display: none;">
+            <!-- Dynamically populated by modal.js -->
+          </div>
+        </div>
       </div>
 
       <div class="modal-footer">
