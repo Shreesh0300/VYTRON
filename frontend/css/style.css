@@ -2991,3 +2991,18 @@ body.role-admin #modalAiSection,
 body.role-admin .ai-troubleshoot-box {
   display: none !important;
 }
+
+/* ── Role-Based UI Visibility (IT Team: Hide Customer Local Data) ─────────── */
+
+body.role-it-team .egress-diff-grid {
+  grid-template-columns: 1fr !important;
+}
+
+body.role-it-team #egressTier1Card,
+body.role-it-team .tier1-card {
+  display: none !important;
+}
+
+body.role-it-team #itPrivacyBanner {
+  display: flex !important;
+}

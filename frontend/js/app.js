@@ -651,9 +651,9 @@ window.fetchAdminTier1Raw = async function() {
 window.updateEgressProofRoleView = function() {
   const user = window.AuthManager ? window.AuthManager.currentUser : null;
   const isAuthenticated = !!(user && user.authorized_role);
-  const userRole = isAuthenticated ? user.authorized_role : null;
+  const userRole = isAuthenticated ? user.authorized_role : "it_team";
   const isAd = userRole === "admin";
-  const isItTeam = userRole === "it_team";
+  const isItTeam = !isAd;
 
   // Hide IT Support Chatbot in Admin login
   const chatbotBtn = document.getElementById("headerChatbotBtn");
@@ -672,12 +672,20 @@ window.updateEgressProofRoleView = function() {
   const itPrivacyBanner = document.getElementById("itPrivacyBanner");
   const egressRoleBadge = document.getElementById("egressRoleBadge");
   const rawPre = document.getElementById("egressRawJson");
-  const tier1StatusPill = document.getElementById("tier1StatusPill");
-  const tier1Subtitle = document.getElementById("tier1Subtitle");
-  const tier1FooterNote = document.getElementById("tier1FooterNote");
 
-  if (isItTeam) {
-    // ── IT TEAM VIEW: TIER 1 COMPLETELY HIDDEN, TIER 2 ONLY ──
+  if (isAd) {
+    // ── ADMIN VIEW: BOTH PANELS SIDE-BY-SIDE FOR AUDIT COMPARISON ──
+    if (diffGrid) diffGrid.classList.remove("it-team-mode");
+    if (tier1Card) tier1Card.style.display = "";
+    if (itPrivacyBanner) itPrivacyBanner.classList.add("hidden");
+    if (egressRoleBadge) {
+      egressRoleBadge.textContent = "ROLE: ADMIN (FULL AUDIT & COMPARISON VIEW)";
+      egressRoleBadge.className = "egress-role-badge admin-mode";
+    }
+    // Fetch live Tier 1 raw data via customer-local inspection
+    window.fetchAdminTier1Raw();
+  } else {
+    // ── IT TEAM / OPERATIONAL VIEW: TIER 1 COMPLETELY HIDDEN, TIER 2 ONLY ──
     if (diffGrid) diffGrid.classList.add("it-team-mode");
     if (tier1Card) tier1Card.style.display = "none";
     if (itPrivacyBanner) itPrivacyBanner.classList.remove("hidden");
@@ -687,37 +695,6 @@ window.updateEgressProofRoleView = function() {
     }
     if (rawPre) {
       rawPre.textContent = "// Tier 1 Customer Local Data is restricted for IT Team role.";
-    }
-  } else {
-    // ── ADMIN or DEFAULT VIEW: BOTH PANELS SIDE-BY-SIDE ──
-    if (diffGrid) diffGrid.classList.remove("it-team-mode");
-    if (tier1Card) tier1Card.style.display = "";
-    if (itPrivacyBanner) itPrivacyBanner.classList.add("hidden");
-
-    if (isAd) {
-      // Admin-specific labels
-      if (egressRoleBadge) {
-        egressRoleBadge.textContent = "ROLE: ADMIN (FULL AUDIT & COMPARISON VIEW)";
-        egressRoleBadge.className = "egress-role-badge admin-mode";
-      }
-      // Fetch live Tier 1 raw data via customer-local inspection
-      window.fetchAdminTier1Raw();
-    } else {
-      // Unauthenticated default — show original layout
-      if (egressRoleBadge) {
-        egressRoleBadge.textContent = "EGRESS PROOF & PRIVACY AUDIT";
-        egressRoleBadge.className = "egress-role-badge";
-      }
-      if (tier1StatusPill) {
-        tier1StatusPill.textContent = "BLOCKED FROM EGRESS";
-        tier1StatusPill.className = "privacy-status-pill blocked";
-      }
-      if (tier1Subtitle) {
-        tier1Subtitle.textContent = "Raw Logs, Internal IPs & Injected Secrets (Kept Local)";
-      }
-      if (tier1FooterNote) {
-        tier1FooterNote.textContent = "🚫 Red fields (credentials, internal IPs, raw queries) are stripped by policy before transmission.";
-      }
     }
   }
 };
@@ -736,8 +713,9 @@ function renderEgressProof(egressProof, dataFreshness) {
 
   const user = window.AuthManager ? window.AuthManager.currentUser : null;
   const isAuthenticated = !!(user && user.authorized_role);
-  const isAd = isAuthenticated && user.authorized_role === "admin";
-  const isItTeam = isAuthenticated && user.authorized_role === "it_team";
+  const userRole = isAuthenticated ? user.authorized_role : "it_team";
+  const isAd = userRole === "admin";
+  const isItTeam = !isAd;
 
   // Tier 1 Raw Local Telemetry
   const rawPre = document.getElementById("egressRawJson");
@@ -746,7 +724,7 @@ function renderEgressProof(egressProof, dataFreshness) {
       // IT Team: strictly restricted from accessing raw telemetry
       rawPre.textContent = "// Tier 1 Customer Local Data is restricted for IT Team role.";
     } else {
-      // Admin or default view: render raw customer local telemetry details as before
+      // Admin view: render raw customer local telemetry details as before
       const rawData = latest?.raw_tier1_preview || latest?.raw_tier1_record || window._lastTier1RawRecord;
       if (rawData) {
         rawPre.textContent = JSON.stringify(rawData, null, 2);

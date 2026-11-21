@@ -194,10 +194,8 @@ def resolve_authorized_role(email: str, requested_role: str, existing_role: Opti
                 "you have been provisioned with IT Team permissions in the interim."
             )
     else:
-        # User requested IT Team
-        # If user is already an admin, preserve their admin privileges unless explicitly demoted
-        final_role = "admin" if existing_role == "admin" else "it_team"
-        return final_role, "active", "Welcome to VYTRON. IT Team operational monitoring permissions granted."
+        # User requested IT Team role
+        return "it_team", "active", "Welcome to VYTRON. IT Team operational monitoring permissions granted."
 
 
 # ── User and Session Database Helpers ─────────────────────────────────────────
