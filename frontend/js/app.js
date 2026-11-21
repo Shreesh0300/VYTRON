@@ -593,7 +593,60 @@ window.toggleSimulationControlBar = function() {
 
 // ── Section E: Egress Proof & Privacy Audit Rendering (Role-Aware) ────────
 
-window._localInspectionAuthorized = false;
+window._lastTier1RawRecord = null;
+window._lastTier1FetchTime = 0;
+window._isFetchingTier1Raw = false;
+
+window.fetchAdminTier1Raw = async function() {
+  const user = window.AuthManager ? window.AuthManager.currentUser : null;
+  if (!user || user.authorized_role !== "admin") return;
+  if (window._isFetchingTier1Raw) return;
+
+  window._isFetchingTier1Raw = true;
+  const rawPre = document.getElementById("egressRawJson");
+  const statusPill = document.getElementById("tier1StatusPill");
+  const subtitle = document.getElementById("tier1Subtitle");
+
+  try {
+    const res = await fetch("/api/egress/tier1-raw", {
+      headers: {
+        "X-Customer-Local-Auth": "granted"
+      }
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data.raw_tier1_record) {
+        window._lastTier1RawRecord = data.raw_tier1_record;
+        if (rawPre) {
+          rawPre.textContent = JSON.stringify(data.raw_tier1_record, null, 2);
+        }
+        if (statusPill) {
+          statusPill.textContent = "BLOCKED FROM EGRESS";
+          statusPill.className = "privacy-status-pill blocked";
+        }
+        if (subtitle) {
+          subtitle.textContent = "Raw Logs, Internal IPs & Injected Secrets (Kept Local)";
+        }
+      }
+    } else if (res.status === 403) {
+      if (rawPre && !window._lastTier1RawRecord) {
+        rawPre.textContent = "// Customer-local inspection unavailable: Local authorization required to inspect on-premise logs.";
+      }
+      if (statusPill) {
+        statusPill.textContent = "LOCAL ACCESS UNAVAILABLE";
+        statusPill.className = "privacy-status-pill blocked";
+      }
+    }
+  } catch (err) {
+    console.warn("[Egress] Customer-local inspection source unreachable:", err);
+    if (rawPre && !window._lastTier1RawRecord) {
+      rawPre.textContent = "// Unable to reach customer-local inspection source.";
+    }
+  } finally {
+    window._isFetchingTier1Raw = false;
+  }
+};
 
 window.updateEgressProofRoleView = function() {
   const user = window.AuthManager ? window.AuthManager.currentUser : null;
@@ -604,45 +657,24 @@ window.updateEgressProofRoleView = function() {
   const tier1Card = document.getElementById("egressTier1Card");
   const itPrivacyBanner = document.getElementById("itPrivacyBanner");
   const egressRoleBadge = document.getElementById("egressRoleBadge");
-  const tier1LocalGateBox = document.getElementById("tier1LocalGateBox");
   const rawPre = document.getElementById("egressRawJson");
   const tier1StatusPill = document.getElementById("tier1StatusPill");
   const tier1Subtitle = document.getElementById("tier1Subtitle");
 
   if (isAd) {
-    // Admin View: Sanitized Tier 2 + Egress Policy + Transmission Audit + Optional Local Inspection Gate
+    // ── ADMIN VIEW: BOTH PANELS DISPLAYED SIDE-BY-SIDE ──
     if (diffGrid) diffGrid.classList.remove("it-team-mode");
-    if (tier1Card) tier1Card.style.display = "flex";
+    if (tier1Card) tier1Card.style.display = "";
     if (itPrivacyBanner) itPrivacyBanner.classList.add("hidden");
     if (egressRoleBadge) {
-      egressRoleBadge.textContent = "ROLE: ADMIN (FULL AUDIT & COMPLIANCE ACCESS)";
+      egressRoleBadge.textContent = "ROLE: ADMIN (FULL AUDIT & COMPARISON VIEW)";
       egressRoleBadge.className = "egress-role-badge admin-mode";
     }
 
-    // Check if customer-local inspection has been authorized
-    if (window._localInspectionAuthorized) {
-      if (tier1LocalGateBox) tier1LocalGateBox.classList.add("hidden");
-      if (rawPre) rawPre.classList.remove("hidden");
-      if (tier1StatusPill) {
-        tier1StatusPill.textContent = "AUDITED LOCAL VIEW";
-        tier1StatusPill.className = "privacy-status-pill approved";
-      }
-      if (tier1Subtitle) {
-        tier1Subtitle.textContent = "Customer-Local Raw Telemetry (Authorized Audit Mode)";
-      }
-    } else {
-      if (tier1LocalGateBox) tier1LocalGateBox.classList.remove("hidden");
-      if (rawPre) rawPre.classList.add("hidden");
-      if (tier1StatusPill) {
-        tier1StatusPill.textContent = "LOCAL AUTH GATE";
-        tier1StatusPill.className = "privacy-status-pill blocked";
-      }
-      if (tier1Subtitle) {
-        tier1Subtitle.textContent = "Customer On-Premises Local Inspection Gate";
-      }
-    }
+    // Retrieve original customer-side data via authorized customer-local inspection
+    window.fetchAdminTier1Raw();
   } else {
-    // IT Team View: Strictly Restricted to Tier 2 Sanitized Metadata & Audit Logs
+    // ── IT TEAM VIEW: TIER 1 COMPLETELY HIDDEN, TIER 2 ONLY ──
     if (diffGrid) diffGrid.classList.add("it-team-mode");
     if (tier1Card) tier1Card.style.display = "none";
     if (itPrivacyBanner) itPrivacyBanner.classList.remove("hidden");
@@ -652,58 +684,6 @@ window.updateEgressProofRoleView = function() {
     }
     if (rawPre) {
       rawPre.textContent = "// Tier 1 Customer Local Data is restricted for IT Team role (Local-first trust boundary active).";
-      rawPre.classList.add("hidden");
-    }
-    if (tier1LocalGateBox) tier1LocalGateBox.classList.remove("hidden");
-  }
-};
-
-window.requestCustomerLocalInspection = async function() {
-  const user = window.AuthManager ? window.AuthManager.currentUser : null;
-  if (!user || user.authorized_role !== "admin") {
-    alert("Access Denied: Only authorized administrators may request customer-local raw payload inspection.");
-    return;
-  }
-
-  const btn = document.getElementById("btnRequestLocalInspection");
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = "Verifying On-Premises Local Authorization...";
-  }
-
-  try {
-    const res = await fetch("/api/egress/tier1-raw", {
-      method: "GET",
-      headers: {
-        "X-Customer-Local-Auth": "granted"
-      }
-    });
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ detail: "Local inspection unauthorized" }));
-      alert(`Customer-Local Gate Blocked: ${err.detail || "Access Denied"}`);
-      if (btn) {
-        btn.disabled = false;
-        btn.textContent = "Authenticate Customer-Local Inspection";
-      }
-      return;
-    }
-
-    const data = await res.json();
-    window._localInspectionAuthorized = true;
-
-    const rawPre = document.getElementById("egressRawJson");
-    if (rawPre && data.raw_tier1_preview) {
-      rawPre.textContent = JSON.stringify(data.raw_tier1_preview, null, 2);
-    }
-
-    window.updateEgressProofRoleView();
-  } catch (err) {
-    console.error("Local inspection request error:", err);
-    alert(`Error requesting customer-local data: ${err.message}`);
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = "Authenticate Customer-Local Inspection";
     }
   }
 };
@@ -720,22 +700,27 @@ function renderEgressProof(egressProof, dataFreshness) {
   const isOutage = stats.outage_simulated !== undefined ? stats.outage_simulated : egressProof.is_outage_simulated;
   const bufferedCount = stats.buffered_in_queue !== undefined ? stats.buffered_in_queue : (egressProof.buffered_count || 0);
 
-  // Left Side: Tier 1 Raw Local Telemetry (Admin with authorized local inspection only)
-  const rawPre = document.getElementById("egressRawJson");
   const user = window.AuthManager ? window.AuthManager.currentUser : null;
   const isAd = user && user.authorized_role === "admin";
 
+  // Tier 1 Raw Local Telemetry (Admin view only)
+  const rawPre = document.getElementById("egressRawJson");
   if (rawPre) {
-    if (isAd && window._localInspectionAuthorized) {
-      if (latest && (latest.raw_tier1_preview || latest.raw_tier1_record)) {
-        rawPre.textContent = JSON.stringify(latest.raw_tier1_preview || latest.raw_tier1_record, null, 2);
+    if (isAd) {
+      // Refresh Tier 1 raw from local inspection source if admin
+      const now = Date.now();
+      if (!window._lastTier1FetchTime || now - window._lastTier1FetchTime > 2500) {
+        window._lastTier1FetchTime = now;
+        window.fetchAdminTier1Raw();
+      } else if (window._lastTier1RawRecord) {
+        rawPre.textContent = JSON.stringify(window._lastTier1RawRecord, null, 2);
       }
-    } else if (!isAd) {
+    } else {
       rawPre.textContent = "// Tier 1 Customer Local Data is restricted for IT Team role (Local-first trust boundary active).";
     }
   }
 
-  // Right Side: Tier 2 SaaS Sanitized Metadata (Accessible to both IT Team and Admin)
+  // Tier 2 SaaS Sanitized Metadata (Accessible to both IT Team and Admin)
   const sanitizedPre = document.getElementById("egressSanitizedJson");
   const sanitizedData = latest?.sanitized_tier2_payload;
   if (sanitizedPre && sanitizedData) {

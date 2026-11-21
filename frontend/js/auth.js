@@ -477,7 +477,7 @@ const AuthManager = {
       console.warn("[Auth] Logout request failed:", err);
     }
     this.currentUser = null;
-    window._localInspectionAuthorized = false;
+    window._lastTier1RawRecord = null;
     this.renderHeaderUnauthenticated();
     this.closeUserDropdown();
     if (window.updateEgressProofRoleView) window.updateEgressProofRoleView();

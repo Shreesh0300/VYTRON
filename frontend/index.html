@@ -396,30 +396,22 @@
         </div>
       </div>
 
-      <!-- Live Comparison Grid -->
-      <div class="egress-diff-grid it-team-mode" id="egressDiffGrid">
-        <!-- Left: Tier 1 Raw Local Telemetry (Admin/Local Inspection Mode Only) -->
-        <div class="egress-diff-card tier1-card" id="egressTier1Card" style="display: none;">
+      <!-- Live Side-by-Side Comparison -->
+      <div class="egress-diff-grid" id="egressDiffGrid">
+        <!-- Left: Tier 1 Raw Local Telemetry (Admin / Authorized Local Inspection Only) -->
+        <div class="egress-diff-card tier1-card" id="egressTier1Card">
           <div class="diff-card-header">
             <div class="diff-header-title">
               <span class="diff-badge tier1-badge">TIER 1: CUSTOMER LOCAL DATA</span>
-              <span class="diff-subtitle" id="tier1Subtitle">Customer On-Premises Local Inspection Gate</span>
+              <span class="diff-subtitle" id="tier1Subtitle">Raw Logs, Internal IPs &amp; Injected Secrets (Kept Local)</span>
             </div>
-            <span class="privacy-status-pill blocked" id="tier1StatusPill">LOCAL AUTH GATE</span>
+            <span class="privacy-status-pill blocked" id="tier1StatusPill">BLOCKED FROM EGRESS</span>
           </div>
           <div class="diff-code-wrapper" id="tier1CodeWrapper">
-            <div class="tier1-local-gate" id="tier1LocalGateBox">
-              <div class="gate-icon">🔐</div>
-              <div class="gate-title">Customer-Local Authorization Required</div>
-              <p class="gate-desc">Central SaaS Administrators do not automatically receive raw customer credentials or internal IPs. Provide customer-local authorization to inspect on-premise payloads.</p>
-              <button class="btn btn-sm btn-outline-cyan" id="btnRequestLocalInspection" onclick="requestCustomerLocalInspection()">
-                Authenticate Customer-Local Inspection
-              </button>
-            </div>
-            <pre class="diff-json hidden" id="egressRawJson">// Local raw telemetry preview...</pre>
+            <pre class="diff-json" id="egressRawJson">// Streaming customer-local telemetry...</pre>
           </div>
           <div class="diff-card-footer">
-            <span class="footer-note" id="tier1FooterNote">🛡️ Customer-local secrets remain on-premises unless explicitly audited under authorized local inspection.</span>
+            <span class="footer-note" id="tier1FooterNote">🚫 Red fields (credentials, internal IPs, raw queries) are stripped by policy before transmission.</span>
           </div>
         </div>
 
@@ -743,7 +735,7 @@
   <script src="js/chart.min.js?v=2.3"></script>
   <script src="js/charts.js?v=2.3"></script>
   <script src="js/modal.js?v=2.3"></script>
-  <script src="js/app.js?v=2.6"></script>
-  <script src="js/auth.js?v=3.2"></script>
+  <script src="js/app.js?v=2.7"></script>
+  <script src="js/auth.js?v=3.3"></script>
 </body>
 </html>

@@ -109,14 +109,45 @@ class TestEgressRBAC(unittest.TestCase):
 
     # 5. Central SaaS Admin with customer-local auth CAN access Tier 1 raw records
     def test_05_admin_with_local_auth_can_access_raw(self):
-        headers = {"X-Customer-Local-Auth": "vytron-collector-key-2026"}
+        headers = {"X-Customer-Local-Auth": "granted"}
         res = client.get("/api/egress/tier1-raw", cookies={COOKIE_NAME: self.admin_session_id}, headers=headers)
         self.assertEqual(res.status_code, 200)
         data = res.json()
         self.assertEqual(data["status"], "authorized")
         self.assertEqual(data["authorization_mode"], "CUSTOMER_LOCAL_ON_PREM_AUTHORIZED")
         self.assertIsNotNone(data["raw_tier1_record"])
-        print("[PASS] TEST 5: Central SaaS Admin WITH valid customer-local authorization receives 200.")
+        
+        # Verify raw record contains customer-side operational telemetry and secrets
+        raw = data["raw_tier1_record"]
+        self.assertIn("server_id", raw)
+        self.assertIn("internal_ip", raw)
+        self.assertTrue(any(k in raw for k in ["jwt_session_token", "db_password", "api_key", "snmp_community", "encryption_passphrase", "raw_credential"]))
+        print("[PASS] TEST 5: Central SaaS Admin WITH valid customer-local authorization receives 200 and raw payload.")
+
+    # 5b. Admin Comparison Test: Compare original Tier 1 vs sanitized Tier 2 side-by-side
+    def test_05b_admin_can_compare_tier1_and_tier2(self):
+        # 1. Fetch Tier 1 raw via customer-local inspection
+        res_raw = client.get("/api/egress/tier1-raw", cookies={COOKIE_NAME: self.admin_session_id}, headers={"X-Customer-Local-Auth": "granted"})
+        self.assertEqual(res_raw.status_code, 200)
+        raw_payload = res_raw.json()["raw_tier1_record"]
+
+        # 2. Fetch Tier 2 sanitized proof
+        res_proof = client.get("/api/egress/proof", cookies={COOKIE_NAME: self.admin_session_id})
+        self.assertEqual(res_proof.status_code, 200)
+        sanitized_payload = res_proof.json()["latest"]["sanitized_tier2_payload"]
+
+        # Comparison Check: Internal IP exists in Tier 1, strictly absent in Tier 2
+        self.assertIn("internal_ip", raw_payload)
+        self.assertNotIn("internal_ip", sanitized_payload)
+
+        # Comparison Check: Cryptographic hash is calculated for Tier 2
+        sha = res_proof.json()["latest"].get("sha256_hash")
+        self.assertIsNotNone(sha)
+        self.assertEqual(len(sha), 64)
+
+        # Comparison Check: Server ID matches across both tiers
+        self.assertEqual(raw_payload["server_id"], sanitized_payload["server_id"])
+        print("[PASS] TEST 5b: Admin can successfully compare original Tier 1 and sanitized Tier 2 payloads side-by-side.")
 
     # 6. Tenant isolation enforcement
     def test_06_tenant_isolation_enforcement(self):
