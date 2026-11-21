@@ -114,7 +114,7 @@ function handleSnapshot(snapshot) {
   if (!snapshot || !snapshot.servers) return;
   AppState.latestSnapshot = snapshot;
 
-  renderOverview(snapshot.overview, snapshot.active_scenario, snapshot.data_freshness);
+  renderOverview(snapshot.overview, snapshot.active_scenario, snapshot.data_freshness, snapshot.is_running);
   renderServersGrid(snapshot.servers);
   renderSelectedServerDetail(snapshot.servers);
   renderNotifications(snapshot.notifications);
@@ -126,7 +126,7 @@ function handleSnapshot(snapshot) {
 
 // ── Section A: Overview Rendering ─────────────────────────────────────────
 
-function renderOverview(overview, activeScenario, dataFreshness) {
+function renderOverview(overview, activeScenario, dataFreshness, isRunning) {
   if (!overview) return;
 
   const totalEl = document.getElementById("statTotalServers");
@@ -137,6 +137,26 @@ function renderOverview(overview, activeScenario, dataFreshness) {
   const prioBadge = document.getElementById("statHighestPriorityBadge");
   const prioDesc = document.getElementById("statHighestPriorityDesc");
   const scenarioPill = document.getElementById("scenarioActivePill");
+  const wsStatusEl = document.getElementById("wsStatus");
+
+  if (wsStatusEl && AppState.wsConnected) {
+    if (isRunning) {
+      wsStatusEl.innerHTML = `
+        <span class="status-dot green"></span>
+        <span class="status-label">LIVE STREAM</span>
+      `;
+    } else if (activeScenario && !isRunning) {
+      wsStatusEl.innerHTML = `
+        <span class="status-dot amber" style="background:#f59e0b; box-shadow:0 0 8px #f59e0b;"></span>
+        <span class="status-label" style="color:#fbbf24;">STOPPED</span>
+      `;
+    } else {
+      wsStatusEl.innerHTML = `
+        <span class="status-dot green" style="background:#10b981; box-shadow:0 0 8px #10b981;"></span>
+        <span class="status-label" style="color:#34d399;">STANDBY</span>
+      `;
+    }
+  }
 
   // 4 Health State Cards
   const excellentEl = document.getElementById("statExcellentServers");
@@ -206,13 +226,16 @@ function renderOverview(overview, activeScenario, dataFreshness) {
   }
 
   if (scenarioPill) {
-    if (activeScenario) {
+    if (activeScenario && isRunning) {
       const summaryText = activeScenario.summary || (activeScenario.affected_servers ? `[${activeScenario.affected_servers.join(", ")}]` : "Active Incidents");
       scenarioPill.textContent = `Active: ${summaryText}`;
-      scenarioPill.classList.add("active");
+      scenarioPill.className = "scenario-status-pill active";
+    } else if (activeScenario && !isRunning) {
+      scenarioPill.textContent = "Simulation Stopped (Paused)";
+      scenarioPill.className = "scenario-status-pill paused";
     } else {
       scenarioPill.textContent = "Normal Baseline (All 5 Stable)";
-      scenarioPill.classList.remove("active");
+      scenarioPill.className = "scenario-status-pill";
     }
   }
 }
@@ -532,6 +555,7 @@ function setupControlListeners() {
         const res = await fetch("/api/simulation/reset", { method: "POST" });
         const data = await res.json();
         if (data.state) handleSnapshot(data.state);
+        if (scenarioSelect) scenarioSelect.value = "auto";
       } catch (e) {
         console.error("Failed to reset simulation:", e);
       }
@@ -608,12 +632,12 @@ function renderEgressProof(egressProof, dataFreshness) {
       if (item.transmission_status === "BUFFERED_LOCALLY") {
         statusHtml = '<span style="color:#fbbf24; font-weight:700;">⏳ Buffered</span>';
       } else if (item.transmission_status === "REPLAYED_AFTER_OUTAGE") {
-        statusHtml = '<span style="color:#22d3ee; font-weight:700;">⚡ Replayed (0 Loss)</span>';
+        statusHtml = '<span style="color:#10b981; font-weight:700;">⚡ Replayed (0 Loss)</span>';
       }
 
       return `
         <tr>
-          <td class="font-mono text-cyan">${item.payload_id || 'PAYLOAD-xxxx'}</td>
+          <td class="font-mono">${item.payload_id || 'PAYLOAD-xxxx'}</td>
           <td class="font-mono">${timeStr} UTC</td>
           <td><span class="server-tag">${item.server_id}</span></td>
           <td><span class="badge-approved">${item.policy_result}</span></td>

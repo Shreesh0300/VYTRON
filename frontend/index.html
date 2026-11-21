@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VYTRON — Infrastructure Monitoring & Incident Prioritization</title>
-  <link rel="stylesheet" href="css/style.css?v=2.3">
+  <link rel="stylesheet" href="css/style.css?v=2.7">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -27,12 +27,6 @@
     </div>
 
     <div class="header-status-group">
-      <a href="chat.html" class="btn btn-sm btn-outline-cyan header-chat-btn" title="Open AI IT Manager Support Chatbot" style="display:flex; align-items:center; gap:6px; text-decoration:none; font-size:12px; font-weight:600; padding:6px 12px; border-radius:6px; border:1px solid rgba(6,182,212,0.4); color:#22d3ee; background:rgba(6,182,212,0.08);">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-        </svg>
-        <span>IT Support Chatbot</span>
-      </a>
       <div class="live-indicator" id="wsStatus">
         <span class="status-dot green"></span>
         <span class="status-label">LIVE STREAM</span>
@@ -41,25 +35,6 @@
     </div>
   </header>
 
-  <!-- Tier 1 to Tier 2 Trust Boundary & Observability Bar -->
-  <div class="trust-boundary-bar">
-    <div class="trust-pill-group">
-      <span class="trust-tag tier1"><span class="pulse-dot-edge"></span>TIER 1: Customer Environment (Edge Collector)</span>
-      <span class="trust-arrow">🔒 TLS + API-Key Auth ➔</span>
-      <span class="trust-tag tier2">TIER 2: Central Platform (Metadata Only)</span>
-    </div>
-    <div class="trust-meta-group">
-      <span class="trust-meta-item">COLLECTOR: <strong class="text-green" id="barCollectorStatus">ONLINE (COLLECTOR-01)</strong></span>
-      <span class="trust-meta-sep">•</span>
-      <span class="trust-meta-item">TENANT: <strong id="barTenantId">TENANT-01</strong></span>
-      <span class="trust-meta-sep">•</span>
-      <span class="trust-meta-item">INGEST LATENCY: <strong class="text-green" id="barLatency">1.2s (Target ≤10s)</strong></span>
-      <span class="trust-meta-sep">•</span>
-      <span class="trust-meta-item">ALERT DETECTION: <strong class="text-green" id="barAlertLatency">2.1s (Target ≤15s)</strong></span>
-      <span class="trust-meta-sep">•</span>
-      <span class="trust-meta-item">DATA FRESHNESS: <strong class="text-cyan" id="barFreshness">REAL-TIME (&lt;1.5s)</strong></span>
-    </div>
-  </div>
 
   <!-- Simulation Control Bar -->
   <div class="control-bar-container">
@@ -161,7 +136,7 @@
           </div>
           <div class="stat-body">
             <div class="stat-label">GOOD (NORMAL)</div>
-            <div class="stat-value text-cyan" id="statGoodServers">0</div>
+            <div class="stat-value text-green" id="statGoodServers">0</div>
             <div class="stat-sub">Nominal Variance</div>
           </div>
         </div>
@@ -210,7 +185,7 @@
           <div class="stat-body">
             <div class="stat-label">ACTIVE INCIDENTS / PRIORITY</div>
             <div class="stat-value-group">
-              <span class="stat-value text-cyan" id="statActiveIncidents">0</span>
+              <span class="stat-value" id="statActiveIncidents">0</span>
               <span class="priority-badge-lg p-none" id="statHighestPriorityBadge">NONE</span>
             </div>
             <div class="stat-sub" id="statHighestPriorityDesc">Cluster Stable</div>
@@ -373,30 +348,11 @@
       <div class="section-header">
         <div class="header-left">
           <h2 class="section-title">SECTION E: EGRESS PROOF &amp; DATA PRIVACY AUDIT PANEL</h2>
-          <span class="section-badge egress-badge">MANDATORY HACKATHON CRITERION</span>
         </div>
-        <div class="egress-header-actions">
-          <button id="btnToggleOutage" class="btn btn-sm btn-outline-warning" onclick="toggleOutageSimulation()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M1 1l22 22"></path>
-              <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path>
-              <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path>
-              <path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path>
-              <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path>
-            </svg>
-            <span id="outageBtnText">Simulate Network Outage (Buffer Test)</span>
-          </button>
-        </div>
+
       </div>
 
-      <p class="section-desc-note">
-        <strong>Trust Boundary Enforcement:</strong> Demonstrates that raw application logs, database passwords, and API secrets remain strictly inside the local customer environment (Tier 1). Only approved, allow-listed metadata with pseudonymous IDs crosses into the SaaS platform (Tier 2).
-      </p>
 
-      <div class="policy-pills-bar">
-        <span class="policy-pill allowed-pill">✓ STRICT ALLOW-LIST (12 Fields): payload_id, timestamp_utc, tenant_id, collector_id, server_id, server_name, server_type, health_state, health_reason, metrics, severity, status</span>
-        <span class="policy-pill blocked-pill">🚫 DROPPED SENSITIVE KEYS: passwords, secrets, tokens, keys, raw_sql, credentials, internal_ip, gateway, community</span>
-      </div>
 
       <!-- Live Side-by-Side Comparison -->
       <div class="egress-diff-grid">

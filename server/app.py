@@ -49,8 +49,9 @@ async def simulation_loop():
     """Background task ticking simulation every 1.5 seconds."""
     while True:
         try:
-            simulator.tick()
-            await broadcast_state()
+            if simulator.is_running:
+                simulator.tick()
+                await broadcast_state()
         except Exception as e:
             print(f"[Simulator Tick Error]: {e}")
         await asyncio.sleep(1.5)
@@ -123,7 +124,7 @@ def get_scenarios():
     }
 
 @app.post("/api/simulation/start")
-def start_simulation(req: StartSimulationRequest = StartSimulationRequest()):
+async def start_simulation(req: StartSimulationRequest = StartSimulationRequest()):
     """Starts a new randomized simulation run."""
     count = req.server_count
     if count is None and req.scenario and req.scenario in ("1", "2", "3", "4", "5"):
@@ -131,6 +132,7 @@ def start_simulation(req: StartSimulationRequest = StartSimulationRequest()):
 
     plan = simulator.start_simulation(server_count=count)
     simulator.tick()  # Immediate tick
+    await broadcast_state()
     return {
         "status": "started",
         "plan": plan,
@@ -138,15 +140,17 @@ def start_simulation(req: StartSimulationRequest = StartSimulationRequest()):
     }
 
 @app.post("/api/simulation/stop")
-def stop_simulation():
-    """Stops the active simulation."""
+async def stop_simulation():
+    """Stops the active simulation and freezes all processes."""
     simulator.stop_simulation()
+    await broadcast_state()
     return {"status": "stopped", "state": simulator.get_snapshot()}
 
 @app.post("/api/simulation/reset")
-def reset_simulation():
-    """Resets all servers back to baseline and resolves active incidents."""
+async def reset_simulation():
+    """Resets all servers back to baseline, clears active incidents, and resets every process to the beginning."""
     simulator.reset()
+    await broadcast_state()
     return {"status": "reset", "state": simulator.get_snapshot()}
 
 @app.get("/api/egress/proof")
@@ -318,11 +322,11 @@ async def websocket_endpoint(websocket: WebSocket):
                 if action == "start":
                     cnt = cmd.get("server_count") or cmd.get("count")
                     simulator.start_simulation(server_count=cnt)
+                    simulator.tick()
                 elif action == "stop":
                     simulator.stop_simulation()
                 elif action == "reset":
                     simulator.reset()
-                simulator.tick()
                 await broadcast_state()
             except Exception:
                 pass

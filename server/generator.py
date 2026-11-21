@@ -13,6 +13,10 @@ class RandomIncidentEngine:
     def __init__(self):
         self.last_selected_servers: set[str] = set()
 
+    def reset(self):
+        """Resets incident generator history and state."""
+        self.last_selected_servers.clear()
+
     def generate_plan(self, server_count: int | None = None) -> dict[str, Any]:
         """
         Generates a new randomized simulation plan:

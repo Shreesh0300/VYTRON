@@ -4,43 +4,46 @@
    ========================================================================== */
 
 :root {
-  --bg-darkest: #07090e;
-  --bg-main: #0c1017;
-  --bg-card: #131b26;
-  --bg-card-hover: #192333;
-  --bg-elevated: #1b2434;
+  /* Clean Light Black (Charcoal/Graphite) Theme with Strategic Green & Red */
+  --bg-darkest: #131418;
+  --bg-main: #18191e;
+  --bg-card: #212229;
+  --bg-card-hover: #292b34;
+  --bg-elevated: #2c2e38;
   --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-active: rgba(59, 130, 246, 0.5);
-  --border-highlight: #3b82f6;
+  --border-active: rgba(255, 255, 255, 0.2);
+  --border-highlight: #ffffff;
 
-  --text-main: #f3f4f6;
-  --text-muted: #94a3b8;
-  --text-dim: #64748b;
+  --text-main: #f4f4f5;
+  --text-muted: #a1a1aa;
+  --text-dim: #71717a;
 
-  --accent-cyan: #06b6d4;
-  --accent-blue: #3b82f6;
+  --accent-cyan: #10b981;
+  --accent-green: #10b981;
+  --accent-blue: #27272a;
   --accent-purple: #8b5cf6;
   --status-green: #10b981;
   --status-amber: #f59e0b;
   --status-red: #ef4444;
 
   --p1-color: #ef4444;
-  --p1-bg: rgba(239, 68, 68, 0.15);
+  --p1-bg: rgba(239, 68, 68, 0.16);
   --p2-color: #f97316;
-  --p2-bg: rgba(249, 115, 22, 0.15);
+  --p2-bg: rgba(249, 115, 22, 0.16);
   --p3-color: #eab308;
-  --p3-bg: rgba(234, 179, 8, 0.15);
-  --p4-color: #06b6d4;
-  --p4-bg: rgba(6, 182, 212, 0.15);
+  --p3-bg: rgba(234, 179, 8, 0.16);
+  --p4-color: #10b981;
+  --p4-bg: rgba(16, 185, 129, 0.16);
 
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
-  --shadow-card: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
+  --shadow-card: 0 4px 18px rgba(0, 0, 0, 0.35);
   --shadow-glow-red: 0 0 25px rgba(239, 68, 68, 0.35);
-  --shadow-glow-blue: 0 0 25px rgba(59, 130, 246, 0.35);
+  --shadow-glow-blue: 0 0 25px rgba(255, 255, 255, 0.15);
+  --shadow-glow-green: 0 0 25px rgba(16, 185, 129, 0.35);
 }
 
 * {
@@ -83,15 +86,16 @@ body {
 }
 
 .brand-logo {
-  background: linear-gradient(135deg, #2563eb, #06b6d4);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
   width: 42px;
   height: 42px;
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  box-shadow: 0 0 16px rgba(37, 99, 235, 0.4);
+  color: #10b981;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .brand-title {
@@ -102,14 +106,14 @@ body {
 }
 
 .brand-title span {
-  color: var(--accent-cyan);
+  color: #a1a1aa;
   font-weight: 600;
-  font-size: 14px;
-  background: rgba(6, 182, 212, 0.12);
+  font-size: 13px;
+  background: rgba(255, 255, 255, 0.06);
   padding: 2px 8px;
   border-radius: 4px;
   margin-left: 6px;
-  border: 1px solid rgba(6, 182, 212, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .brand-subtitle {
@@ -196,9 +200,9 @@ body {
   font-weight: 600;
   padding: 5px 12px;
   border-radius: 16px;
-  background: rgba(59, 130, 246, 0.12);
-  color: #60a5fa;
-  border: 1px solid rgba(59, 130, 246, 0.3);
+  background: rgba(255, 255, 255, 0.05);
+  color: #d4d4d8;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .scenario-status-pill.active {
@@ -206,6 +210,12 @@ body {
   color: #f87171;
   border-color: rgba(239, 68, 68, 0.4);
   animation: pulse-glow 2s infinite;
+}
+
+.scenario-status-pill.paused {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.4);
 }
 
 .control-actions {
@@ -229,8 +239,8 @@ body {
 }
 
 .select-wrapper select:focus {
-  border-color: var(--accent-blue);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.08);
 }
 
 .btn {
@@ -247,36 +257,40 @@ body {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #2563eb, #1d4ed8);
-  color: white;
-  box-shadow: 0 2px 10px rgba(37, 99, 235, 0.3);
+  background: #10b981;
+  color: #09090b;
+  font-weight: 700;
+  box-shadow: 0 2px 10px rgba(16, 185, 129, 0.25);
 }
 
 .btn-primary:hover {
-  background: linear-gradient(135deg, #1d4ed8, #1e40af);
+  background: #059669;
+  color: #ffffff;
   transform: translateY(-1px);
 }
 
 .btn-secondary {
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  color: var(--text-main);
-}
-
-.btn-secondary:hover {
-  background: var(--bg-card-hover);
-  border-color: var(--text-muted);
-}
-
-.btn-danger {
   background: rgba(239, 68, 68, 0.12);
   border: 1px solid rgba(239, 68, 68, 0.3);
   color: #f87171;
 }
 
-.btn-danger:hover {
+.btn-secondary:hover {
   background: rgba(239, 68, 68, 0.25);
   border-color: var(--status-red);
+  color: #ffffff;
+}
+
+.btn-danger {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #a1a1aa;
+}
+
+.btn-danger:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
 }
 
 /* ── Main Layout ───────────────────────────────────────────────────────── */
@@ -354,7 +368,7 @@ body {
   justify-content: center;
 }
 
-.stat-icon-wrap.blue { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+.stat-icon-wrap.blue { background: rgba(16, 185, 129, 0.15); color: #34d399; }
 .stat-icon-wrap.green { background: rgba(16, 185, 129, 0.15); color: #34d399; }
 .stat-icon-wrap.amber { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
 .stat-icon-wrap.red { background: rgba(239, 68, 68, 0.15); color: #f87171; }
@@ -439,9 +453,9 @@ body {
 }
 
 .server-summary-card.selected {
-  border-color: var(--accent-cyan);
-  box-shadow: 0 0 16px rgba(6, 182, 212, 0.25);
-  background: #111a28;
+  border-color: #10b981;
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.25);
+  background: #252730;
 }
 
 .server-summary-card.alert-critical {
@@ -707,7 +721,7 @@ body {
   border-radius: 1px;
 }
 
-.legend-line.telemetry { background: #06b6d4; }
+.legend-line.telemetry { background: #10b981; }
 .legend-line.warning { background: #f59e0b; }
 .legend-line.critical { background: #ef4444; }
 
@@ -1096,8 +1110,8 @@ body {
 }
 
 .modal-action-box {
-  background: rgba(6, 182, 212, 0.08);
-  border: 1px solid rgba(6, 182, 212, 0.3);
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.25);
   border-radius: var(--radius-sm);
   padding: 14px;
 }
@@ -1256,7 +1270,7 @@ body {
 }
 
 .ai-command-box {
-  background: #090d16;
+  background: #0f172a;
   border: 1px solid var(--border-subtle);
   border-radius: 4px;
   padding: 8px 12px;
@@ -1313,19 +1327,19 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(6, 182, 212, 0.08);
-  border: 1px solid rgba(6, 182, 212, 0.25);
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.25);
   padding: 4px 10px;
   border-radius: 4px;
   font-size: 11px;
-  color: #67e8f9;
+  color: #34d399;
   text-decoration: none;
   transition: all 0.15s ease;
 }
 
 .ai-source-pill:hover {
-  background: rgba(6, 182, 212, 0.2);
-  border-color: #06b6d4;
+  background: rgba(16, 185, 129, 0.2);
+  border-color: #10b981;
   color: #ffffff;
 }
 
@@ -1532,9 +1546,9 @@ body {
 
 .health-badge.health-good,
 .health-badge-card.health-good {
-  background: rgba(6, 182, 212, 0.18);
-  color: #22d3ee;
-  border: 1px solid rgba(6, 182, 212, 0.35);
+  background: rgba(16, 185, 129, 0.12);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.25);
 }
 
 .health-badge.health-fair,
@@ -1654,7 +1668,7 @@ body {
 
 .diff-code-wrapper {
   padding: 12px;
-  background: #090d16;
+  background: #0f172a;
   max-height: 280px;
   overflow-y: auto;
 }
@@ -1985,14 +1999,14 @@ body {
 }
 
 .assistant-bubble {
-  background: #111a28;
+  background: #1e293b;
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: #e2e8f0;
   width: 100%;
 }
 
 .user-bubble {
-  background: #1e293b;
+  background: #243047;
   border: 1px solid rgba(6, 182, 212, 0.3);
   color: #f8fafc;
 }
@@ -2102,8 +2116,8 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #111a28;
-  border: 1px solid rgba(6, 182, 212, 0.2);
+  background: #1e293b;
+  border: 1px solid rgba(14, 165, 233, 0.25);
   padding: 8px 14px;
   border-radius: 20px;
   font-size: 11px;
@@ -2117,7 +2131,7 @@ body {
 .input-wrapper {
   display: flex;
   gap: 10px;
-  background: #0f172a;
+  background: #1e293b;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   padding: 8px 12px;

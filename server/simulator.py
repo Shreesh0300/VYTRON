@@ -76,6 +76,8 @@ class InfrastructureSimulator:
         """
         self.active_plan = self.engine.generate_plan(server_count=server_count)
         self.is_running = True
+        self.ticks = 0
+        self.start_time = time.time()
         return self.active_plan
 
     def start_scenario(self, scenario_id: str = "auto") -> bool:
@@ -89,7 +91,7 @@ class InfrastructureSimulator:
         return True
 
     def stop_simulation(self):
-        """Stops active simulation, freezing current degradation targets."""
+        """Stops active simulation, freezing all processes in place."""
         self.is_running = False
 
     def stop_scenario(self):
@@ -100,23 +102,30 @@ class InfrastructureSimulator:
         """
         Resets all 5 servers to baseline, clears simulation plan,
         resets detector breach states, and resolves active incidents.
+        Starts every process from the clean initial state.
         """
         self.active_plan = None
         self.is_running = False
+        self.ticks = 0
+        self.start_time = time.time()
         self.detector.reset()
         self.incident_manager.reset()
+        self.engine.reset()
+        self.egress_engine.reset()
+        self._init_servers()
 
-        now_str = time.strftime("%H:%M:%S")
-        for server_id, conf in SERVERS_CONFIG.items():
-            s_state = self.servers[server_id]
-            s_state["status"] = "NORMAL"
-            for param_key, p_conf in conf["parameters"].items():
-                base = p_conf["baseline"]
-                s_state["metrics"][param_key] = base
-                s_state["history"][param_key].append({
-                    "time": now_str,
-                    "value": round(base, 2)
-                })
+        # Seed initial clean baseline egress proof records
+        for s_id, s_data in self.servers.items():
+            self.egress_engine.process_telemetry(
+                server_id=s_id,
+                server_name=s_data["name"],
+                server_type=s_data["type"],
+                health_state=s_data["health_state"],
+                health_reason=s_data["health_reason"],
+                metrics=s_data["metrics"],
+                severity="NORMAL",
+                status="NORMAL",
+            )
 
     def tick(self):
         """
@@ -130,6 +139,9 @@ class InfrastructureSimulator:
         4. Detects breaches (consecutive confirmed) and creates/updates incidents.
         5. Resolves incidents when metrics return to normal baseline.
         """
+        if not self.is_running:
+            return
+
         self.ticks += 1
         now = time.time()
         now_str = time.strftime("%H:%M:%S")
@@ -316,7 +328,7 @@ class InfrastructureSimulator:
             cluster_health = "GOOD"
 
         active_simulation_info = None
-        if self.active_plan and self.is_running:
+        if self.active_plan:
             active_simulation_info = {
                 "plan_id": self.active_plan["plan_id"],
                 "title": f"Dynamic Simulation ({len(self.active_plan['affected_servers'])} Servers Affected)",
@@ -324,6 +336,8 @@ class InfrastructureSimulator:
                 "description": f"Randomized incident generation across: {', '.join(self.active_plan['affected_servers'])}",
                 "affected_servers": self.active_plan["affected_servers"],
                 "issues": self.active_plan["issues"],
+                "is_running": self.is_running,
+                "status": "RUNNING" if self.is_running else "STOPPED",
             }
 
         now_utc = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
@@ -335,6 +349,8 @@ class InfrastructureSimulator:
             "timestamp": time.time(),
             "timestamp_str": time.strftime("%H:%M:%S"),
             "timestamp_utc": now_utc,
+            "is_running": self.is_running,
+            "simulation_status": "RUNNING" if self.is_running else ("STOPPED" if self.active_plan else "IDLE"),
             "overview": {
                 "total_servers": len(self.servers),
                 "normal_count": normal_count,

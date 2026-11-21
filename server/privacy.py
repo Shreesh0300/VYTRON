@@ -57,6 +57,13 @@ class EgressProofEngine:
         self._buffer: list[dict[str, Any]] = []
         self._max_history = 50
 
+    def reset(self):
+        """Resets egress proof sequence, history, buffer, and outage state."""
+        self._seq = 0
+        self._egress_history.clear()
+        self._buffer.clear()
+        self._outage_simulated = False
+
     def set_outage(self, is_outage: bool) -> dict[str, Any]:
         """Toggles simulated SaaS connection outage to demonstrate local buffering."""
         self._outage_simulated = is_outage

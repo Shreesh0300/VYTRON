@@ -52,8 +52,8 @@ const ServerCharts = {
         {
           label: meta.name,
           data: dataPoints,
-          borderColor: "#06b6d4",
-          backgroundColor: "rgba(6, 182, 212, 0.12)",
+          borderColor: "#10b981",
+          backgroundColor: "rgba(16, 185, 129, 0.15)",
           fill: true,
           tension: 0.35,
           borderWidth: 2,
@@ -110,8 +110,8 @@ const ServerCharts = {
             plugins: {
               legend: { display: false },
               tooltip: {
-                backgroundColor: "#131b26",
-                borderColor: "rgba(255, 255, 255, 0.1)",
+                backgroundColor: "#121a15",
+                borderColor: "rgba(16, 185, 129, 0.3)",
                 borderWidth: 1,
                 titleFont: { size: 11, family: "JetBrains Mono" },
                 bodyFont: { size: 11, family: "JetBrains Mono" },
@@ -122,11 +122,11 @@ const ServerCharts = {
               x: {
                 display: true,
                 grid: {
-                  color: "rgba(255, 255, 255, 0.04)",
+                  color: "rgba(16, 185, 129, 0.08)",
                   drawBorder: false,
                 },
                 ticks: {
-                  color: "#64748b",
+                  color: "#94a3b8",
                   maxTicksLimit: 6,
                   font: { size: 10, family: "JetBrains Mono" },
                 },
@@ -134,11 +134,11 @@ const ServerCharts = {
               y: {
                 display: true,
                 grid: {
-                  color: "rgba(255, 255, 255, 0.04)",
+                  color: "rgba(16, 185, 129, 0.08)",
                   drawBorder: false,
                 },
                 ticks: {
-                  color: "#64748b",
+                  color: "#94a3b8",
                   font: { size: 10, family: "JetBrains Mono" },
                 },
                 suggestedMin: meta.min !== undefined ? meta.min : undefined,

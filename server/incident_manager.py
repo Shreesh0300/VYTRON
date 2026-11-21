@@ -164,3 +164,8 @@ class IncidentManager:
             inc["resolved_at"] = now
             inc["resolved_at_str"] = now_str
         self._active_incidents.clear()
+        for inc in self._notifications:
+            inc["status"] = "RESOLVED"
+            if not inc.get("resolved_at"):
+                inc["resolved_at"] = now
+                inc["resolved_at_str"] = now_str
