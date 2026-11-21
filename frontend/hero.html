@@ -578,7 +578,7 @@
   </div>
 
   <!-- Scripts -->
-  <script src="js/auth.js?v=3.4"></script>
+  <script src="js/auth.js?v=3.5"></script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       if (window.AuthManager) {
@@ -592,6 +592,17 @@
             btn.outerHTML = '<a href="index.html" class="hero-btn hero-btn-login hero-btn-lg"><span>Enter Dashboard ➔</span></a>';
           });
         };
+
+        // Open login modal automatically if redirected from dashboard
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get("auth_required") === "true" || urlParams.get("login") === "1") {
+          setTimeout(() => {
+            if (!AuthManager.currentUser) {
+              AuthManager.openModal();
+              AuthManager.showAlert("Authentication Required: Please sign in with your Google account to access the VYTRON Live Dashboard.", "warning");
+            }
+          }, 350);
+        }
       }
     });
   </script>

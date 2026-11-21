@@ -9,6 +9,7 @@ const AppState = {
   pollingInterval: null,
   wsConnected: false,
 };
+window.AppState = AppState;
 
 // ── Initialization ────────────────────────────────────────────────────────
 
@@ -72,8 +73,13 @@ function connectWebSocket() {
       }
     };
 
-    ws.onclose = () => {
+    ws.onclose = (event) => {
       AppState.wsConnected = false;
+      if (event && (event.code === 1008 || event.code === 4001)) {
+        console.warn("[Telemetry] WebSocket rejected unauthenticated connection. Redirecting to login...");
+        window.location.replace("hero.html?auth_required=true");
+        return;
+      }
       if (wsStatusEl) {
         wsStatusEl.innerHTML = `
           <span class="status-dot red" style="background:#f59e0b; box-shadow:0 0 8px #f59e0b;"></span>
@@ -98,6 +104,12 @@ function startPollingFallback() {
   AppState.pollingInterval = setInterval(async () => {
     try {
       const res = await fetch("/api/state");
+      if (res.status === 401) {
+        clearInterval(AppState.pollingInterval);
+        AppState.pollingInterval = null;
+        window.location.replace("hero.html?auth_required=true");
+        return;
+      }
       if (res.ok) {
         const snapshot = await res.json();
         handleSnapshot(snapshot);
@@ -728,6 +740,8 @@ function renderEgressProof(egressProof, dataFreshness) {
       const rawData = latest?.raw_tier1_preview || latest?.raw_tier1_record || window._lastTier1RawRecord;
       if (rawData) {
         rawPre.textContent = JSON.stringify(rawData, null, 2);
+      } else {
+        window.fetchAdminTier1Raw();
       }
     }
   }
@@ -800,6 +814,7 @@ function renderEgressProof(egressProof, dataFreshness) {
     }).join("");
   }
 }
+window.renderEgressProof = renderEgressProof;
 
 // ── Outage Simulation Toggle Handler ──────────────────────────────────────
 

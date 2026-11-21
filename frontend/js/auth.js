@@ -209,6 +209,9 @@ const AuthManager = {
           this.currentUser = data;
           this.renderHeaderAuthenticated();
           if (window.updateEgressProofRoleView) window.updateEgressProofRoleView();
+          if (window.AppState && window.AppState.latestSnapshot && window.renderEgressProof) {
+            window.renderEgressProof(window.AppState.latestSnapshot.egress_proof, window.AppState.latestSnapshot.data_freshness);
+          }
           return;
         }
       }
@@ -216,6 +219,17 @@ const AuthManager = {
       // Unauthenticated, standard state
     }
     this.currentUser = null;
+
+    // Strict barrier: unauthenticated users cannot visit the dashboard
+    const isDashboard = window.location.pathname.endsWith("index.html") ||
+                        window.location.pathname === "/" ||
+                        window.location.pathname.endsWith("/dashboard") ||
+                        document.getElementById("serverGrid") !== null;
+    if (isDashboard) {
+      window.location.replace("hero.html?auth_required=true");
+      return;
+    }
+
     this.renderHeaderUnauthenticated();
     if (window.updateEgressProofRoleView) window.updateEgressProofRoleView();
   },
@@ -507,6 +521,14 @@ const AuthManager = {
       // Show notice if admin request was downgraded for security
       if (data.requested_role === "admin" && data.authorized_role !== "admin") {
         alert(`Notice: ${data.message}`);
+      }
+
+      // If logging in from hero or landing, or if auth_required was flagged, navigate into dashboard
+      const urlParams = new URLSearchParams(window.location.search);
+      const isLanding = window.location.pathname.includes("hero") || window.location.pathname.includes("landing");
+      if (urlParams.get("auth_required") === "true" || isLanding) {
+        window.location.href = "index.html";
+        return;
       }
     } catch (err) {
       this.showAlert(`Authentication request failed: ${err.message}`, "error");

@@ -292,7 +292,9 @@ def get_user_from_session(session_id: str) -> Optional[dict[str, Any]]:
     conn.close()
 
     if row:
-        return dict(row)
+        u = dict(row)
+        u["authenticated"] = True
+        return u
     return None
 
 

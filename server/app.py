@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Request, Depends, Query, status
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -22,7 +22,14 @@ from pydantic import BaseModel
 from server.simulator import InfrastructureSimulator
 from server.rag.pipeline import troubleshoot_incident, get_vector_store
 from server.chatbot import process_chat_message, get_contextual_suggestions, chat_sessions
-from server.auth import auth_router, get_current_user_optional, get_current_user, require_admin
+from server.auth import (
+    auth_router,
+    get_current_user_optional,
+    get_current_user,
+    require_admin,
+    COOKIE_NAME,
+    get_user_from_session,
+)
 
 # Global simulator instance
 simulator = InfrastructureSimulator()
@@ -426,6 +433,14 @@ def api_chat_clear(req: ClearChatRequest):
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
+    # Enforce authentication barrier: Reject unauthenticated websocket telemetry streaming
+    session_id = websocket.cookies.get(COOKIE_NAME)
+    user = get_user_from_session(session_id) if session_id else None
+    if not user or not user.get("authenticated"):
+        # 1008 Policy Violation / Unauthorized
+        await websocket.close(code=1008)
+        return
+
     await websocket.accept()
     active_connections.add(websocket)
     try:
@@ -459,10 +474,26 @@ async def websocket_endpoint(websocket: WebSocket):
 frontend_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend")
 
 @app.get("/hero")
+@app.get("/hero.html")
 @app.get("/landing")
+@app.get("/landing.html")
 def get_hero_landing():
     """Serves the VYTRON AIOps Hero & Platform Overview page."""
     return FileResponse(os.path.join(frontend_dir, "hero.html"))
+
+@app.get("/")
+@app.get("/index.html")
+@app.get("/dashboard")
+async def get_dashboard_root(request: Request):
+    """
+    Mandatory authentication barrier for the monitoring dashboard:
+    Unauthenticated visitors are redirected to the home landing page (hero.html) to log in.
+    Authenticated users (IT Team or Admin) are served index.html.
+    """
+    user = await get_current_user_optional(request)
+    if not user or not user.get("user_id"):
+        return RedirectResponse(url="/hero.html?auth_required=true", status_code=302)
+    return FileResponse(os.path.join(frontend_dir, "index.html"))
 
 if os.path.exists(frontend_dir):
     app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="frontend")

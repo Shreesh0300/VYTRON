@@ -315,6 +315,56 @@ class TestGoogleAuthAndRoleAuthorization(unittest.TestCase):
         self.assertEqual(res_sources.status_code, 200)
         print("[PASS] TEST 12: Regression check passed — existing telemetry, monitoring, and RAG endpoints operate normally.")
 
+    # 13. Dashboard Authentication Barrier: Unauthenticated users redirected to hero page
+    def test_13_dashboard_unauthenticated_redirect(self):
+        # Accessing dashboard root without login
+        res_root = client.get("/", follow_redirects=False)
+        self.assertEqual(res_root.status_code, 302)
+        self.assertIn("/hero.html?auth_required=true", res_root.headers.get("location", ""))
+
+        # Accessing index.html without login
+        res_index = client.get("/index.html", follow_redirects=False)
+        self.assertEqual(res_index.status_code, 302)
+        self.assertIn("/hero.html?auth_required=true", res_index.headers.get("location", ""))
+
+        # Accessing /dashboard without login
+        res_dash = client.get("/dashboard", follow_redirects=False)
+        self.assertEqual(res_dash.status_code, 302)
+        self.assertIn("/hero.html?auth_required=true", res_dash.headers.get("location", ""))
+        print("[PASS] TEST 13: Unauthenticated user visiting dashboard is redirected to hero landing page with 302.")
+
+    # 14. Dashboard Access: Authenticated users can visit index.html
+    def test_14_dashboard_authenticated_access(self):
+        user = upsert_user("sub-dash-auth", "Dashboard User", "dash@vytron.ai", "", "it_team")
+        sess_id = create_session(user["user_id"])
+
+        res_root = client.get("/", cookies={COOKIE_NAME: sess_id}, follow_redirects=False)
+        self.assertEqual(res_root.status_code, 200)
+
+        res_index = client.get("/index.html", cookies={COOKIE_NAME: sess_id}, follow_redirects=False)
+        self.assertEqual(res_index.status_code, 200)
+        print("[PASS] TEST 14: Authenticated user is granted access to live monitoring dashboard.")
+
+    # 15. WebSocket Telemetry Guard: Reject unauthenticated streaming with 1008
+    def test_15_websocket_auth_guard(self):
+        from starlette.testclient import WebSocketDisconnect
+        # Unauthenticated attempt
+        unauth_client = TestClient(app)
+        with self.assertRaises(WebSocketDisconnect) as ctx:
+            with unauth_client.websocket_connect("/ws") as ws:
+                pass
+        self.assertEqual(ctx.exception.code, 1008)
+
+        # Authenticated attempt
+        auth_client = TestClient(app)
+        user = upsert_user("sub-ws-test", "WS Tester", "wstest@vytron.ai", "", "it_team")
+        sess_id = create_session(user["user_id"])
+        auth_client.cookies.set(COOKIE_NAME, sess_id)
+        with auth_client.websocket_connect("/ws") as ws:
+            snap = ws.receive_json()
+            self.assertIn("servers", snap)
+        print("[PASS] TEST 15: WebSocket connection enforces authentication barrier with 1008 Policy Violation.")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -10,6 +10,20 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <!-- Google Identity Services (OAuth 2.0 / OpenID Connect) -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <!-- Immediate Pre-Flight Dashboard Authentication Barrier -->
+  <script>
+    (function() {
+      fetch("/api/auth/me", { credentials: "same-origin" })
+        .then(function(res) {
+          if (!res.ok) {
+            window.location.replace("hero.html?auth_required=true");
+          }
+        })
+        .catch(function() {
+          window.location.replace("hero.html?auth_required=true");
+        });
+    })();
+  </script>
 </head>
 <body class="role-it-team">
   <!-- Header -->
