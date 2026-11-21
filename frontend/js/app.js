@@ -667,6 +667,15 @@ window.updateEgressProofRoleView = function() {
   const isAd = userRole === "admin";
   const isItTeam = !isAd;
 
+  // Sync body role classes
+  if (isAd) {
+    document.body.classList.add("role-admin");
+    document.body.classList.remove("role-it-team");
+  } else {
+    document.body.classList.remove("role-admin");
+    document.body.classList.add("role-it-team");
+  }
+
   // Hide IT Support Chatbot in Admin login
   const chatbotBtn = document.getElementById("headerChatbotBtn");
   if (chatbotBtn) {
@@ -681,26 +690,70 @@ window.updateEgressProofRoleView = function() {
 
   const diffGrid = document.getElementById("egressDiffGrid");
   const tier1Card = document.getElementById("egressTier1Card");
+  const tier2Card = document.getElementById("egressTier2Card");
   const itPrivacyBanner = document.getElementById("itPrivacyBanner");
   const egressRoleBadge = document.getElementById("egressRoleBadge");
   const rawPre = document.getElementById("egressRawJson");
+  const sanitizedPre = document.getElementById("egressSanitizedJson");
 
   if (isAd) {
     // ── ADMIN VIEW: BOTH PANELS SIDE-BY-SIDE FOR AUDIT COMPARISON ──
-    if (diffGrid) diffGrid.classList.remove("it-team-mode");
-    if (tier1Card) tier1Card.style.display = "block";
-    if (itPrivacyBanner) itPrivacyBanner.classList.add("hidden");
+    if (diffGrid) {
+      diffGrid.classList.remove("it-team-mode");
+      diffGrid.style.display = "grid";
+      diffGrid.style.gridTemplateColumns = "1fr 1fr";
+    }
+    if (tier1Card) {
+      tier1Card.style.display = "block";
+      tier1Card.style.visibility = "visible";
+    }
+    if (tier2Card) {
+      tier2Card.style.display = "block";
+      tier2Card.style.visibility = "visible";
+    }
+    if (itPrivacyBanner) {
+      itPrivacyBanner.classList.add("hidden");
+      itPrivacyBanner.style.display = "none";
+    }
     if (egressRoleBadge) {
       egressRoleBadge.textContent = "ROLE: ADMIN (FULL AUDIT & COMPARISON VIEW)";
       egressRoleBadge.className = "egress-role-badge admin-mode";
     }
+
+    // Instantly populate Tier 1 and Tier 2 from latest snapshot if available
+    const latest = window.AppState?.latestSnapshot?.egress_proof?.latest;
+    if (latest) {
+      const rawData = latest.raw_tier1_preview || latest.raw_tier1_record || window._lastTier1RawRecord;
+      if (rawData && rawPre) {
+        rawPre.textContent = JSON.stringify(rawData, null, 2);
+      }
+      const sanitizedData = latest.sanitized_tier2_payload;
+      if (sanitizedData && sanitizedPre) {
+        sanitizedPre.textContent = JSON.stringify(sanitizedData, null, 2);
+      }
+      const hashEl = document.getElementById("egressSha256");
+      if (hashEl && latest.sha256_hash) {
+        hashEl.textContent = latest.sha256_hash;
+      }
+    }
+
     // Fetch live Tier 1 raw data via customer-local inspection
     window.fetchAdminTier1Raw();
   } else {
     // ── IT TEAM / OPERATIONAL VIEW: TIER 1 COMPLETELY HIDDEN, TIER 2 ONLY ──
-    if (diffGrid) diffGrid.classList.add("it-team-mode");
+    if (diffGrid) {
+      diffGrid.classList.add("it-team-mode");
+      diffGrid.style.gridTemplateColumns = "1fr";
+    }
     if (tier1Card) tier1Card.style.display = "none";
-    if (itPrivacyBanner) itPrivacyBanner.classList.remove("hidden");
+    if (tier2Card) {
+      tier2Card.style.display = "block";
+      tier2Card.style.visibility = "visible";
+    }
+    if (itPrivacyBanner) {
+      itPrivacyBanner.classList.remove("hidden");
+      itPrivacyBanner.style.display = "flex";
+    }
     if (egressRoleBadge) {
       egressRoleBadge.textContent = "ROLE: IT TEAM (RESTRICTED TIER 2 VIEW)";
       egressRoleBadge.className = "egress-role-badge";
@@ -729,20 +782,27 @@ function renderEgressProof(egressProof, dataFreshness) {
   const isAd = userRole === "admin";
   const isItTeam = !isAd;
 
-  // Tier 1 Raw Local Telemetry
+  // Tier 1 Raw Local Telemetry (Admin view only; IT Team restricted)
   const rawPre = document.getElementById("egressRawJson");
-  if (rawPre) {
-    if (isItTeam) {
-      // IT Team: strictly restricted from accessing raw telemetry
-      rawPre.textContent = "// Tier 1 Customer Local Data is restricted for IT Team role.";
-    } else {
-      // Admin view: render raw customer local telemetry details as before
+  const tier1Card = document.getElementById("egressTier1Card");
+  const diffGrid = document.getElementById("egressDiffGrid");
+
+  if (isAd) {
+    if (diffGrid) diffGrid.classList.remove("it-team-mode");
+    if (tier1Card) tier1Card.style.display = "block";
+    if (rawPre) {
       const rawData = latest?.raw_tier1_preview || latest?.raw_tier1_record || window._lastTier1RawRecord;
       if (rawData) {
         rawPre.textContent = JSON.stringify(rawData, null, 2);
       } else {
         window.fetchAdminTier1Raw();
       }
+    }
+  } else {
+    if (diffGrid) diffGrid.classList.add("it-team-mode");
+    if (tier1Card) tier1Card.style.display = "none";
+    if (rawPre) {
+      rawPre.textContent = "// Tier 1 Customer Local Data is restricted for IT Team role.";
     }
   }
 

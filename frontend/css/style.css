@@ -2994,32 +2994,53 @@ body.role-admin .ai-troubleshoot-box {
 
 /* ── Role-Based UI Visibility (IT Team: Hide Customer Local Data) ─────────── */
 
-body.role-it-team .egress-diff-grid,
-.egress-diff-grid.it-team-mode {
+body.role-it-team:not(.role-admin) .egress-diff-grid,
+body:not(.role-admin) .egress-diff-grid.it-team-mode {
   grid-template-columns: 1fr !important;
 }
 
-body.role-it-team #egressTier1Card,
-body.role-it-team .tier1-card,
-.egress-diff-grid.it-team-mode #egressTier1Card,
-.egress-diff-grid.it-team-mode .tier1-card {
+body.role-it-team:not(.role-admin) #egressTier1Card,
+body.role-it-team:not(.role-admin) .tier1-card,
+body:not(.role-admin) .egress-diff-grid.it-team-mode #egressTier1Card,
+body:not(.role-admin) .egress-diff-grid.it-team-mode .tier1-card {
   display: none !important;
 }
 
-body.role-it-team #itPrivacyBanner,
-.egress-diff-grid.it-team-mode ~ #itPrivacyBanner {
+body.role-it-team:not(.role-admin) #itPrivacyBanner,
+body:not(.role-admin) .egress-diff-grid.it-team-mode ~ #itPrivacyBanner {
   display: flex !important;
 }
 
-/* ── Role-Based UI Visibility (Admin: Show Both Tier 1 & Tier 2 for Comparison) ─ */
+/* ── Role-Based UI Visibility (Admin: ALWAYS Show Both Tier 1 & Tier 2 Side-by-Side) ─ */
 
-body.role-admin .egress-diff-grid {
+body.role-admin .egress-diff-grid,
+body.role-admin #egressDiffGrid,
+body.role-admin .egress-diff-grid.it-team-mode {
+  display: grid !important;
   grid-template-columns: 1fr 1fr !important;
+  gap: 16px !important;
 }
 
 body.role-admin #egressTier1Card,
-body.role-admin .tier1-card {
+body.role-admin .tier1-card,
+body.role-admin .egress-diff-grid #egressTier1Card,
+body.role-admin #egressDiffGrid #egressTier1Card,
+body.role-admin .egress-diff-grid.it-team-mode #egressTier1Card,
+body.role-admin .egress-diff-grid.it-team-mode .tier1-card {
   display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+body.role-admin #egressTier2Card,
+body.role-admin .tier2-card,
+body.role-admin .egress-diff-grid #egressTier2Card,
+body.role-admin #egressDiffGrid #egressTier2Card,
+body.role-admin .egress-diff-grid.it-team-mode #egressTier2Card,
+body.role-admin .egress-diff-grid.it-team-mode .tier2-card {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 body.role-admin #itPrivacyBanner {

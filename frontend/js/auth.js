@@ -290,6 +290,9 @@ const AuthManager = {
     }
 
     if (window.updateEgressProofRoleView) window.updateEgressProofRoleView();
+    if (window.AppState && window.AppState.latestSnapshot && window.renderEgressProof) {
+      window.renderEgressProof(window.AppState.latestSnapshot.egress_proof, window.AppState.latestSnapshot.data_freshness);
+    }
 
     // Avatar image or initials
     let avatarHtml = "";
