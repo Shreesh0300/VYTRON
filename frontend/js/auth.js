@@ -288,6 +288,16 @@ const AuthManager = {
           </div>
 
           <div class="dropdown-actions">
+            <a href="index.html" class="dropdown-item-btn dashboard-action" style="text-decoration:none;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+              </svg>
+              <span>Open Monitoring Dashboard</span>
+            </a>
+
             ${isAd ? `
               <button id="btnOpenAdminMgmt" class="dropdown-item-btn admin-action">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
