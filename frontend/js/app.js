@@ -138,6 +138,15 @@ function renderOverview(overview, activeScenario, dataFreshness, isRunning) {
   const prioDesc = document.getElementById("statHighestPriorityDesc");
   const scenarioPill = document.getElementById("scenarioActivePill");
   const wsStatusEl = document.getElementById("wsStatus");
+  const simToggleBtn = document.getElementById("btnToggleSimControls");
+
+  if (simToggleBtn) {
+    if (isRunning) {
+      simToggleBtn.classList.add("sim-running");
+    } else {
+      simToggleBtn.classList.remove("sim-running");
+    }
+  }
 
   if (wsStatusEl && AppState.wsConnected) {
     if (isRunning) {
@@ -562,6 +571,25 @@ function setupControlListeners() {
     });
   }
 }
+
+// ── Simulation Control Bar Visibility Toggle ──────────────────────────────
+
+window.toggleSimulationControlBar = function() {
+  const bar = document.getElementById("controlBarContainer");
+  const btn = document.getElementById("btnToggleSimControls");
+  if (!bar) return;
+
+  const isHidden = bar.classList.contains("collapsed") || bar.style.display === "none";
+  if (isHidden) {
+    bar.classList.remove("collapsed");
+    bar.style.display = "block";
+    if (btn) btn.classList.add("active");
+  } else {
+    bar.classList.add("collapsed");
+    bar.style.display = "none";
+    if (btn) btn.classList.remove("active");
+  }
+};
 
 // ── Section E: Egress Proof & Privacy Audit Rendering ─────────────────────
 
