@@ -959,11 +959,11 @@ body {
   display: none;
   align-items: center;
   justify-content: center;
-  z-index: 100;
+  z-index: 1000;
 }
 
 .modal-backdrop.open {
-  display: flex;
+  display: flex !important;
 }
 
 .modal-box {
@@ -2216,6 +2216,39 @@ body {
 .confirm-modal-card {
   max-width: 420px;
   padding: 20px;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* Header IT Support Chatbot Button */
+.header-chat-btn,
+.header-chat-pill {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  text-decoration: none !important;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  padding: 6px 13px !important;
+  border-radius: 7px !important;
+  border: 1px solid rgba(6, 182, 212, 0.45) !important;
+  color: #22d3ee !important;
+  background: rgba(6, 182, 212, 0.08) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  box-shadow: 0 2px 8px rgba(6, 182, 212, 0.12) !important;
+  cursor: pointer !important;
+}
+
+.header-chat-btn:hover,
+.header-chat-pill:hover {
+  background: rgba(6, 182, 212, 0.2) !important;
+  border-color: #38bdf8 !important;
+  color: #ffffff !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(6, 182, 212, 0.25) !important;
 }
 
 /* ══════════════════════════════════════════════════════════════════════════

@@ -49,63 +49,78 @@ const AuthManager = {
   },
 
   bindEvents() {
-    // Open login modal from header (event delegation in case of dynamic re-render)
-    if (this.elements.headerContainer) {
-      this.elements.headerContainer.addEventListener("click", (e) => {
-        const loginBtn = e.target.closest("#btnOpenLoginModal");
-        if (loginBtn) {
-          this.openModal();
-          return;
-        }
+    // Global click listener for authentication and modal triggers
+    document.addEventListener("click", (e) => {
+      const loginBtn = e.target.closest("#btnOpenLoginModal");
+      if (loginBtn) {
+        e.preventDefault();
+        this.openModal();
+        return;
+      }
 
-        const profileBtn = e.target.closest("#userProfileBtn");
-        if (profileBtn) {
-          this.toggleUserDropdown();
-          return;
-        }
+      const profileBtn = e.target.closest("#userProfileBtn");
+      if (profileBtn) {
+        e.preventDefault();
+        this.toggleUserDropdown();
+        return;
+      }
 
-        const logoutBtn = e.target.closest("#btnLogout");
-        if (logoutBtn) {
-          e.preventDefault();
-          this.logout();
-          return;
-        }
+      const logoutBtn = e.target.closest("#btnLogout");
+      if (logoutBtn) {
+        e.preventDefault();
+        this.logout();
+        return;
+      }
 
-        const adminMgmtBtn = e.target.closest("#btnOpenAdminMgmt");
-        if (adminMgmtBtn) {
-          e.preventDefault();
-          this.closeUserDropdown();
-          this.openAdminModal();
-          return;
-        }
-      });
+      const adminMgmtBtn = e.target.closest("#btnOpenAdminMgmt");
+      if (adminMgmtBtn) {
+        e.preventDefault();
+        this.closeUserDropdown();
+        this.openAdminModal();
+        return;
+      }
+
+      // Close modal when clicking directly on the backdrop outside the modal box
+      if (e.target.id === "authModal") {
+        this.closeModal();
+      }
+      if (e.target.id === "adminUsersModal") {
+        this.closeAdminModal();
+      }
+    });
+
+    // Modal Close buttons
+    const btnClose = document.getElementById("btnAuthModalClose");
+    if (btnClose) {
+      btnClose.addEventListener("click", () => this.closeModal());
     }
-
-    // Modal Close
-    if (this.elements.btnClose) {
-      this.elements.btnClose.addEventListener("click", () => this.closeModal());
-    }
-    if (this.elements.btnCancel) {
-      this.elements.btnCancel.addEventListener("click", () => this.closeModal());
+    const btnCancel = document.getElementById("btnAuthCancel");
+    if (btnCancel) {
+      btnCancel.addEventListener("click", () => this.closeModal());
     }
 
     // Role Selection
-    if (this.elements.roleCardItTeam && this.elements.roleCardAdmin) {
-      this.elements.roleCardItTeam.addEventListener("click", () => this.selectRole("it_team"));
-      this.elements.roleCardAdmin.addEventListener("click", () => this.selectRole("admin"));
+    const roleIt = document.getElementById("roleCardItTeam");
+    const roleAd = document.getElementById("roleCardAdmin");
+    if (roleIt && roleAd) {
+      roleIt.addEventListener("click", () => this.selectRole("it_team"));
+      roleAd.addEventListener("click", () => this.selectRole("admin"));
     }
 
     // Google Continue Button
-    if (this.elements.btnContinueGoogle) {
-      this.elements.btnContinueGoogle.addEventListener("click", () => this.handleGoogleButtonClick());
+    const btnGoogle = document.getElementById("btnContinueWithGoogle");
+    if (btnGoogle) {
+      btnGoogle.addEventListener("click", () => this.handleGoogleButtonClick());
     }
 
     // Admin Modal Close
-    if (this.elements.btnAdminModalClose) {
-      this.elements.btnAdminModalClose.addEventListener("click", () => this.closeAdminModal());
+    const btnAdmClose = document.getElementById("btnAdminModalClose");
+    if (btnAdmClose) {
+      btnAdmClose.addEventListener("click", () => this.closeAdminModal());
     }
-    if (this.elements.btnAdminClose) {
-      this.elements.btnAdminClose.addEventListener("click", () => this.closeAdminModal());
+    const btnAdmFootClose = document.getElementById("btnAdminClose");
+    if (btnAdmFootClose) {
+      btnAdmFootClose.addEventListener("click", () => this.closeAdminModal());
     }
 
     // Close dropdown on outside click
@@ -314,24 +329,33 @@ const AuthManager = {
     this.selectRole("it_team");
 
     // Check if OAuth is configured
+    const notice = document.getElementById("oauthNotConfiguredNotice");
     if (!this.oauthConfig.configured) {
-      if (this.elements.oauthNotice) {
-        this.elements.oauthNotice.classList.remove("hidden");
+      if (notice) {
+        notice.classList.remove("hidden");
+        notice.style.display = "flex";
       }
     } else {
-      if (this.elements.oauthNotice) {
-        this.elements.oauthNotice.classList.add("hidden");
+      if (notice) {
+        notice.classList.add("hidden");
+        notice.style.display = "none";
       }
     }
 
-    if (this.elements.modal) {
-      this.elements.modal.classList.remove("hidden");
+    const modal = document.getElementById("authModal");
+    if (modal) {
+      modal.classList.add("open");
+      modal.classList.remove("hidden");
+      modal.style.display = "flex";
     }
   },
 
   closeModal() {
-    if (this.elements.modal) {
-      this.elements.modal.classList.add("hidden");
+    const modal = document.getElementById("authModal");
+    if (modal) {
+      modal.classList.remove("open");
+      modal.classList.add("hidden");
+      modal.style.display = "none";
     }
     this.hideAlert();
   },
@@ -446,15 +470,21 @@ const AuthManager = {
       return;
     }
 
-    if (this.elements.adminModal) {
-      this.elements.adminModal.classList.remove("hidden");
+    const adminModal = document.getElementById("adminUsersModal");
+    if (adminModal) {
+      adminModal.classList.add("open");
+      adminModal.classList.remove("hidden");
+      adminModal.style.display = "flex";
     }
     this.loadAdminUsers();
   },
 
   closeAdminModal() {
-    if (this.elements.adminModal) {
-      this.elements.adminModal.classList.add("hidden");
+    const adminModal = document.getElementById("adminUsersModal");
+    if (adminModal) {
+      adminModal.classList.remove("open");
+      adminModal.classList.add("hidden");
+      adminModal.style.display = "none";
     }
   },
 
