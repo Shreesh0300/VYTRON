@@ -155,7 +155,12 @@ const AuthManager = {
   },
 
   setupGoogleGsiClient() {
+    const gsiDiv = document.getElementById("googleGsiButtonDiv");
+    const customBtn = document.getElementById("btnContinueWithGoogle");
+
     if (!this.oauthConfig.configured || !this.oauthConfig.google_client_id) {
+      if (gsiDiv) gsiDiv.style.display = "none";
+      if (customBtn) customBtn.style.display = "flex";
       return;
     }
 
@@ -169,20 +174,29 @@ const AuthManager = {
           cancel_on_tap_outside: true
         });
 
-        // Render hidden GSI button if needed for native flow
-        if (this.elements.googleGsiDiv) {
-          google.accounts.id.renderButton(this.elements.googleGsiDiv, {
-            theme: "filled_black",
+        if (gsiDiv) {
+          gsiDiv.style.display = "flex";
+          gsiDiv.style.justifyContent = "center";
+          gsiDiv.style.width = "100%";
+          google.accounts.id.renderButton(gsiDiv, {
+            theme: "outline",
             size: "large",
-            width: "340"
+            type: "standard",
+            text: "continue_with",
+            shape: "rectangular",
+            logo_alignment: "left",
+            width: 380
           });
+        }
+        if (customBtn) {
+          customBtn.style.display = "none";
         }
       } catch (err) {
         console.warn("[Auth] GSI initialization warning:", err);
       }
     } else {
-      // Retry after 500ms in case the external script is still loading
-      setTimeout(() => this.setupGoogleGsiClient(), 500);
+      // Retry after 400ms in case the external script is still loading
+      setTimeout(() => this.setupGoogleGsiClient(), 400);
     }
   },
 
