@@ -2697,6 +2697,14 @@ body.chat-page-body {
   animation: dropdownFadeIn 0.15s ease-out;
 }
 
+.user-profile-dropdown.hidden {
+  display: none !important;
+}
+
+.hidden {
+  display: none !important;
+}
+
 @keyframes dropdownFadeIn {
   from { opacity: 0; transform: translateY(-6px); }
   to { opacity: 1; transform: translateY(0); }

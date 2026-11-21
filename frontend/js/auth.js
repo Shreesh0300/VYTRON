@@ -80,6 +80,11 @@ const AuthManager = {
         return;
       }
 
+      const dashboardBtn = e.target.closest(".dashboard-action");
+      if (dashboardBtn) {
+        this.closeUserDropdown();
+      }
+
       // Close modal when clicking directly on the backdrop outside the modal box
       if (e.target.id === "authModal") {
         this.closeModal();
@@ -317,7 +322,7 @@ const AuthManager = {
         </button>
 
         <!-- Dropdown Menu -->
-        <div id="userProfileDropdown" class="user-profile-dropdown hidden">
+        <div id="userProfileDropdown" class="user-profile-dropdown hidden" style="display: none;">
           <div class="dropdown-header">
             <div class="dropdown-user-name">${u.name}</div>
             <div class="dropdown-user-email">${u.email}</div>
@@ -376,18 +381,30 @@ const AuthManager = {
 
   toggleUserDropdown() {
     const dropdown = document.getElementById("userProfileDropdown");
+    const profileBtn = document.getElementById("userProfileBtn");
     if (!dropdown) return;
-    const isHidden = dropdown.classList.contains("hidden");
+    const isHidden = dropdown.classList.contains("hidden") || dropdown.style.display === "none";
     if (isHidden) {
       dropdown.classList.remove("hidden");
+      dropdown.style.display = "flex";
+      if (profileBtn) profileBtn.setAttribute("aria-expanded", "true");
     } else {
       dropdown.classList.add("hidden");
+      dropdown.style.display = "none";
+      if (profileBtn) profileBtn.setAttribute("aria-expanded", "false");
     }
   },
 
   closeUserDropdown() {
     const dropdown = document.getElementById("userProfileDropdown");
-    if (dropdown) dropdown.classList.add("hidden");
+    const profileBtn = document.getElementById("userProfileBtn");
+    if (dropdown) {
+      dropdown.classList.add("hidden");
+      dropdown.style.display = "none";
+    }
+    if (profileBtn) {
+      profileBtn.setAttribute("aria-expanded", "false");
+    }
   },
 
   selectRole(role) {
