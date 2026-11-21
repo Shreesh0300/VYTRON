@@ -21,6 +21,7 @@ from pydantic import BaseModel
 from server.simulator import InfrastructureSimulator
 from server.rag.pipeline import troubleshoot_incident, get_vector_store
 from server.chatbot import process_chat_message, get_contextual_suggestions, chat_sessions
+from server.auth import auth_router
 
 # Global simulator instance
 simulator = InfrastructureSimulator()
@@ -82,6 +83,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(auth_router)
 
 # ── REST Models ─────────────────────────────────────────────────────────
 

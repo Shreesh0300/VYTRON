@@ -8,6 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Google Identity Services (OAuth 2.0 / OpenID Connect) -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
   <!-- Header -->
@@ -27,11 +29,28 @@
     </div>
 
     <div class="header-status-group">
+      <a href="chat.html" class="header-chat-pill" title="Open AI IT Manager Support Chatbot">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+        <span>IT Support Chatbot</span>
+      </a>
       <div class="live-indicator" id="wsStatus">
         <span class="status-dot green"></span>
         <span class="status-label">LIVE STREAM</span>
       </div>
       <div class="clock-display" id="clockDisplay">--:--:--</div>
+
+      <!-- Login / Sign Up & User Profile Slot -->
+      <div id="authHeaderContainer" class="auth-header-container">
+        <button id="btnOpenLoginModal" class="btn-auth-login" title="Sign in with Google">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <span>Login / Sign Up</span>
+        </button>
+      </div>
     </div>
   </header>
 
@@ -527,10 +546,173 @@
     </div>
   </div>
 
+  <!-- Authentication Modal (Google Sign-In & Role Selection) -->
+  <div class="modal-overlay hidden" id="authModal">
+    <div class="modal-card auth-modal-card">
+      <div class="modal-header auth-modal-header">
+        <div class="auth-header-title-wrap">
+          <div class="auth-logo-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+              <polyline points="2 17 12 22 22 17"></polyline>
+              <polyline points="2 12 12 17 22 12"></polyline>
+            </svg>
+          </div>
+          <div>
+            <h2 class="auth-modal-title">Welcome to VYTRON</h2>
+            <p class="auth-modal-subtitle">Sign in to access your observability platform.</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" id="btnAuthModalClose" aria-label="Close modal">&times;</button>
+      </div>
+
+      <div class="modal-body auth-modal-body">
+        <!-- Error / Status Notice Banner -->
+        <div id="authAlertBanner" class="auth-alert-banner hidden"></div>
+
+        <!-- Role Selection (Required before Sign-In) -->
+        <div class="auth-section">
+          <label class="auth-section-label">
+            <span>Select your role</span>
+            <span class="auth-required-tag">Required</span>
+          </label>
+
+          <div class="role-selection-grid">
+            <!-- Role Option 1: IT Team -->
+            <label class="role-card selected" id="roleCardItTeam">
+              <input type="radio" name="vytronRole" value="it_team" id="roleRadioItTeam" checked class="role-radio-input">
+              <div class="role-card-content">
+                <div class="role-card-header">
+                  <div class="role-icon it-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+                      <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+                      <line x1="6" y1="6" x2="6.01" y2="6"></line>
+                      <line x1="6" y1="18" x2="6.01" y2="18"></line>
+                    </svg>
+                  </div>
+                  <div>
+                    <span class="role-title">IT Team</span>
+                    <span class="role-badge it-badge">Default</span>
+                  </div>
+                </div>
+                <p class="role-desc">Monitor infrastructure, inspect server health, investigate incidents, and access AI troubleshooting assistance.</p>
+              </div>
+            </label>
+
+            <!-- Role Option 2: Admin -->
+            <label class="role-card" id="roleCardAdmin">
+              <input type="radio" name="vytronRole" value="admin" id="roleRadioAdmin" class="role-radio-input">
+              <div class="role-card-content">
+                <div class="role-card-header">
+                  <div class="role-icon admin-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <span class="role-title">Admin</span>
+                    <span class="role-badge admin-badge">Approval Required</span>
+                  </div>
+                </div>
+                <p class="role-desc">Manage users, access permissions, and platform configuration.</p>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Google OAuth 2.0 / OpenID Connect Button -->
+        <div class="auth-section">
+          <div class="google-auth-container">
+            <!-- Native Styled Google Button -->
+            <button id="btnContinueWithGoogle" class="btn-google-continue">
+              <svg width="18" height="18" viewBox="0 0 24 24" class="google-svg">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+              </svg>
+              <span>Continue with Google</span>
+            </button>
+
+            <!-- Container for Google Identity Services Client Render -->
+            <div id="googleGsiButtonDiv" style="display:none;"></div>
+          </div>
+
+          <!-- Unconfigured OAuth Notice (shown if GOOGLE_CLIENT_ID missing) -->
+          <div id="oauthNotConfiguredNotice" class="oauth-config-notice hidden">
+            <div class="oauth-notice-icon">⚠️</div>
+            <div class="oauth-notice-content">
+              <strong>Google OAuth Not Configured:</strong>
+              <p>Set <code>GOOGLE_CLIENT_ID</code> and <code>GOOGLE_CLIENT_SECRET</code> in your <code>.env</code> file to enable live Google Sign-In. See <code>.env.example</code> for details.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="auth-security-footer-note">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          <span>Admin role requests are validated by backend policy. Unauthorized users cannot self-escalate.</span>
+        </div>
+      </div>
+
+      <div class="modal-footer auth-modal-footer">
+        <button class="btn btn-secondary" id="btnAuthCancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Users & Role Management Modal -->
+  <div class="modal-overlay hidden" id="adminUsersModal">
+    <div class="modal-card admin-modal-card">
+      <div class="modal-header">
+        <div class="auth-header-title-wrap">
+          <div class="auth-logo-icon admin-accent">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+          </div>
+          <div>
+            <h2 class="auth-modal-title">Platform Access & User Roles</h2>
+            <p class="auth-modal-subtitle">Manage authorized IT Team members and Administrator assignments.</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" id="btnAdminModalClose">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="adminUsersTableContainer">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="adminUsersTableBody">
+              <tr><td colspan="5" style="text-align:center; padding:15px;">Loading users...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="btnAdminClose">Close</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Scripts -->
   <script src="js/chart.min.js?v=2.3"></script>
   <script src="js/charts.js?v=2.3"></script>
   <script src="js/modal.js?v=2.3"></script>
   <script src="js/app.js?v=2.3"></script>
+  <script src="js/auth.js?v=2.8"></script>
 </body>
 </html>
