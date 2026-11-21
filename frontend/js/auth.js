@@ -524,6 +524,9 @@ const AuthManager = {
     this.renderHeaderUnauthenticated();
     this.closeUserDropdown();
     if (window.updateEgressProofRoleView) window.updateEgressProofRoleView();
+
+    // Redirect to home page
+    window.location.href = "hero.html";
   },
 
   // ── Admin Modal Operations ────────────────────────────────────────────────
