@@ -676,7 +676,7 @@ window.updateEgressProofRoleView = function() {
   if (isAd) {
     // ── ADMIN VIEW: BOTH PANELS SIDE-BY-SIDE FOR AUDIT COMPARISON ──
     if (diffGrid) diffGrid.classList.remove("it-team-mode");
-    if (tier1Card) tier1Card.style.display = "";
+    if (tier1Card) tier1Card.style.display = "block";
     if (itPrivacyBanner) itPrivacyBanner.classList.add("hidden");
     if (egressRoleBadge) {
       egressRoleBadge.textContent = "ROLE: ADMIN (FULL AUDIT & COMPARISON VIEW)";

@@ -221,9 +221,9 @@ const AuthManager = {
   },
 
   renderHeaderUnauthenticated() {
-    // Reset body role classes
+    // Default to IT Team role classes
     document.body.classList.remove("role-admin");
-    document.body.classList.remove("role-it-team");
+    document.body.classList.add("role-it-team");
 
     // Chatbot visible for unauthenticated
     const chatbotBtn = document.getElementById("headerChatbotBtn");
