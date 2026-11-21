@@ -185,6 +185,35 @@ class TestEgressRBAC(unittest.TestCase):
         self.assertEqual(data["tenant_id"], "TENANT-01")
         print("[PASS] TEST 8: Data classification endpoint verified with allow-list and restricted fields.")
 
+    # 9. Disconnected collector returns exact user-required error message
+    def test_09_disconnected_collector_handling(self):
+        headers = {"X-Customer-Local-Auth": "granted"}
+        # Simulate collector disconnection
+        simulator.collector_connected = False
+        try:
+            res = client.get("/api/egress/tier1-raw", cookies={COOKIE_NAME: self.admin_session_id}, headers=headers)
+            self.assertEqual(res.status_code, 200)
+            data = res.json()
+            self.assertEqual(data["status"], "unavailable")
+            self.assertIsNone(data["raw_tier1_record"])
+            self.assertEqual(data["message"], "Customer-local Tier 1 data unavailable – collector connection required.")
+            print("[PASS] TEST 9: Disconnected collector correctly returns exact fallback status and message.")
+        finally:
+            simulator.collector_connected = True
+
+    # 10. Central SaaS snapshot (/api/state) contains zero raw customer secrets
+    def test_10_public_state_snapshot_omits_raw_secrets(self):
+        res = client.get("/api/state")
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        egress_proof = data.get("egress_proof", {})
+        latest = egress_proof.get("latest")
+        if latest:
+            self.assertNotIn("raw_tier1_preview", latest)
+        for h in egress_proof.get("history", []):
+            self.assertNotIn("raw_tier1_preview", h)
+        print("[PASS] TEST 10: Public /api/state snapshot strictly strips raw secrets for central SaaS privacy.")
+
 
 if __name__ == "__main__":
     unittest.main()

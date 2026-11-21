@@ -250,7 +250,7 @@ class InfrastructureSimulator:
                 status=s_state["status"],
             )
 
-    def get_snapshot(self) -> dict[str, Any]:
+    def get_snapshot(self, include_raw: bool = False) -> dict[str, Any]:
         """Returns the complete platform snapshot for UI / WebSocket."""
         servers_data = {}
         normal_count = 0
@@ -382,8 +382,8 @@ class InfrastructureSimulator:
                 "timestamp_utc": now_utc,
             },
             "egress_proof": {
-                "latest": self.egress_engine.get_latest_proof(include_raw=True),
-                "history": self.egress_engine.get_history(6),
+                "latest": self.egress_engine.get_latest_proof(include_raw=include_raw),
+                "history": self.egress_engine.get_history(6, include_raw=include_raw),
                 "stats": self.egress_engine.get_stats(),
             },
             "servers": servers_data,

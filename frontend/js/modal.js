@@ -55,9 +55,13 @@ const IncidentModal = {
 
     // Role-based AI troubleshooting visibility: Hide completely for Admin
     const currentUser = window.AuthManager ? window.AuthManager.currentUser : null;
-    const isAd = currentUser && currentUser.authorized_role === "admin";
+    const isAd = (currentUser && currentUser.authorized_role === "admin") || document.body.classList.contains("role-admin");
     if (this.aiSection) {
-      this.aiSection.style.display = isAd ? "none" : "";
+      if (isAd) {
+        this.aiSection.style.setProperty("display", "none", "important");
+      } else {
+        this.aiSection.style.display = "";
+      }
     }
 
     // Reset AI troubleshooting state

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VYTRON — Infrastructure Monitoring & Incident Prioritization</title>
-  <link rel="stylesheet" href="css/style.css?v=3.2">
+  <link rel="stylesheet" href="css/style.css?v=4.0">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -401,16 +401,7 @@
           <h2 class="section-title">SECTION E: EGRESS PROOF &amp; DATA PRIVACY AUDIT PANEL</h2>
           <span class="egress-role-badge" id="egressRoleBadge">ROLE: IT TEAM (RESTRICTED TIER 2 VIEW)</span>
         </div>
-        <div class="header-right" style="display:flex; align-items:center; gap:8px;">
-          <button id="btnQuickToggleRole" class="btn btn-sm" style="background:rgba(56,189,248,0.12); border:1px solid #38bdf8; color:#38bdf8; border-radius:6px; padding:5px 10px; font-size:12px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:6px;" title="Toggle role between Admin and IT Team to test Section E Trust Boundary">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="17 1 21 5 17 9"></polyline>
-              <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
-              <polyline points="7 23 3 19 7 15"></polyline>
-              <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
-            </svg>
-            <span id="btnQuickToggleRoleText">Switch to Admin View (Both Tiers)</span>
-          </button>
+        <div class="header-right">
           <button id="btnToggleOutage" class="btn btn-sm btn-outline-warning" onclick="toggleOutageSimulation()">
             <span id="outageBtnText">Simulate Network Outage (Buffer Test)</span>
           </button>
@@ -762,10 +753,10 @@
   </div>
 
   <!-- Scripts -->
-  <script src="js/chart.min.js?v=2.3"></script>
-  <script src="js/charts.js?v=2.3"></script>
-  <script src="js/modal.js?v=2.3"></script>
-  <script src="js/app.js?v=3.0"></script>
-  <script src="js/auth.js?v=3.3"></script>
+  <script src="js/chart.min.js?v=4.0"></script>
+  <script src="js/charts.js?v=4.0"></script>
+  <script src="js/modal.js?v=4.0"></script>
+  <script src="js/app.js?v=4.0"></script>
+  <script src="js/auth.js?v=4.0"></script>
 </body>
 </html>

@@ -608,10 +608,12 @@ window.toggleSimulationControlBar = function() {
 window._lastTier1RawRecord = null;
 window._lastTier1FetchTime = 0;
 window._isFetchingTier1Raw = false;
+window._lastTier1PayloadId = null;
 
 window.fetchAdminTier1Raw = async function() {
   const user = window.AuthManager ? window.AuthManager.currentUser : null;
-  if (!user || user.authorized_role !== "admin") return;
+  const isAd = (user && user.authorized_role === "admin") || document.body.classList.contains("role-admin");
+  if (!isAd) return;
   if (window._isFetchingTier1Raw) return;
 
   window._isFetchingTier1Raw = true;
@@ -628,7 +630,7 @@ window.fetchAdminTier1Raw = async function() {
 
     if (res.ok) {
       const data = await res.json();
-      if (data.raw_tier1_record) {
+      if (data.status === "authorized" && data.raw_tier1_record) {
         window._lastTier1RawRecord = data.raw_tier1_record;
         if (rawPre) {
           rawPre.textContent = JSON.stringify(data.raw_tier1_record, null, 2);
@@ -640,20 +642,40 @@ window.fetchAdminTier1Raw = async function() {
         if (subtitle) {
           subtitle.textContent = "Raw Logs, Internal IPs & Injected Secrets (Kept Local)";
         }
+      } else {
+        if (rawPre) {
+          rawPre.textContent = "// Customer-local Tier 1 data unavailable – collector connection required.";
+        }
+        if (statusPill) {
+          statusPill.textContent = "COLLECTOR DISCONNECTED";
+          statusPill.className = "privacy-status-pill warning";
+        }
       }
     } else if (res.status === 403) {
-      if (rawPre && !window._lastTier1RawRecord) {
-        rawPre.textContent = "// Customer-local inspection unavailable: Local authorization required to inspect on-premise logs.";
+      if (rawPre) {
+        rawPre.textContent = "// Customer-local Tier 1 data unavailable – collector connection required.";
       }
       if (statusPill) {
         statusPill.textContent = "LOCAL ACCESS UNAVAILABLE";
         statusPill.className = "privacy-status-pill blocked";
       }
+    } else {
+      if (rawPre) {
+        rawPre.textContent = "// Customer-local Tier 1 data unavailable – collector connection required.";
+      }
+      if (statusPill) {
+        statusPill.textContent = "COLLECTOR DISCONNECTED";
+        statusPill.className = "privacy-status-pill warning";
+      }
     }
   } catch (err) {
     console.warn("[Egress] Customer-local inspection source unreachable:", err);
-    if (rawPre && !window._lastTier1RawRecord) {
-      rawPre.textContent = "// Unable to reach customer-local inspection source.";
+    if (rawPre) {
+      rawPre.textContent = "// Customer-local Tier 1 data unavailable – collector connection required.";
+    }
+    if (statusPill) {
+      statusPill.textContent = "COLLECTOR DISCONNECTED";
+      statusPill.className = "privacy-status-pill warning";
     }
   } finally {
     window._isFetchingTier1Raw = false;
@@ -685,7 +707,11 @@ window.updateEgressProofRoleView = function() {
   // Hide AI Troubleshooting Section in Admin login
   const aiSection = document.getElementById("modalAiSection");
   if (aiSection) {
-    aiSection.style.display = isAd ? "none" : "";
+    if (isAd) {
+      aiSection.style.setProperty("display", "none", "important");
+    } else {
+      aiSection.style.display = "";
+    }
   }
 
   const diffGrid = document.getElementById("egressDiffGrid");
@@ -713,15 +739,11 @@ window.updateEgressProofRoleView = function() {
     }
     if (itPrivacyBanner) {
       itPrivacyBanner.classList.add("hidden");
-      itPrivacyBanner.style.display = "none";
+      itPrivacyBanner.style.setProperty("display", "none", "important");
     }
     if (egressRoleBadge) {
       egressRoleBadge.textContent = "ROLE: ADMIN (FULL AUDIT & COMPARISON VIEW)";
       egressRoleBadge.className = "egress-role-badge admin-mode";
-    }
-    const quickBtnText = document.getElementById("btnQuickToggleRoleText");
-    if (quickBtnText) {
-      quickBtnText.textContent = "Switch to IT Team View (Tier 2 Only)";
     }
 
     // Instantly populate Tier 1 and Tier 2 from latest snapshot if available
@@ -747,9 +769,13 @@ window.updateEgressProofRoleView = function() {
     // ── IT TEAM / OPERATIONAL VIEW: TIER 1 COMPLETELY HIDDEN, TIER 2 ONLY ──
     if (diffGrid) {
       diffGrid.classList.add("it-team-mode");
+      diffGrid.style.display = "grid";
       diffGrid.style.gridTemplateColumns = "1fr";
     }
-    if (tier1Card) tier1Card.style.display = "none";
+    if (tier1Card) {
+      tier1Card.style.setProperty("display", "none", "important");
+      tier1Card.style.visibility = "hidden";
+    }
     if (tier2Card) {
       tier2Card.style.display = "block";
       tier2Card.style.visibility = "visible";
@@ -762,12 +788,8 @@ window.updateEgressProofRoleView = function() {
       egressRoleBadge.textContent = "ROLE: IT TEAM (RESTRICTED TIER 2 VIEW)";
       egressRoleBadge.className = "egress-role-badge";
     }
-    const quickBtnText = document.getElementById("btnQuickToggleRoleText");
-    if (quickBtnText) {
-      quickBtnText.textContent = "Switch to Admin View (Both Tiers)";
-    }
     if (rawPre) {
-      rawPre.textContent = "// Tier 1 Customer Local Data is restricted for IT Team role.";
+      rawPre.textContent = "";
     }
   }
 };
@@ -787,30 +809,55 @@ function renderEgressProof(egressProof, dataFreshness) {
   const user = window.AuthManager ? window.AuthManager.currentUser : null;
   const isAuthenticated = !!(user && user.authorized_role);
   const userRole = isAuthenticated ? user.authorized_role : "it_team";
-  const isAd = userRole === "admin";
-  const isItTeam = !isAd;
+  const isAd = (userRole === "admin") || document.body.classList.contains("role-admin");
 
   // Tier 1 Raw Local Telemetry (Admin view only; IT Team restricted)
   const rawPre = document.getElementById("egressRawJson");
   const tier1Card = document.getElementById("egressTier1Card");
+  const tier2Card = document.getElementById("egressTier2Card");
   const diffGrid = document.getElementById("egressDiffGrid");
 
   if (isAd) {
-    if (diffGrid) diffGrid.classList.remove("it-team-mode");
-    if (tier1Card) tier1Card.style.display = "block";
+    if (diffGrid) {
+      diffGrid.classList.remove("it-team-mode");
+      diffGrid.style.display = "grid";
+      diffGrid.style.gridTemplateColumns = "1fr 1fr";
+    }
+    if (tier1Card) {
+      tier1Card.style.display = "block";
+      tier1Card.style.visibility = "visible";
+    }
+    if (tier2Card) {
+      tier2Card.style.display = "block";
+      tier2Card.style.visibility = "visible";
+    }
     if (rawPre) {
-      const rawData = latest?.raw_tier1_preview || latest?.raw_tier1_record || window._lastTier1RawRecord;
-      if (rawData) {
-        rawPre.textContent = JSON.stringify(rawData, null, 2);
-      } else {
+      if (window._lastTier1RawRecord) {
+        rawPre.textContent = JSON.stringify(window._lastTier1RawRecord, null, 2);
+      }
+      if (latest && latest.payload_id && latest.payload_id !== window._lastTier1PayloadId) {
+        window._lastTier1PayloadId = latest.payload_id;
+        window.fetchAdminTier1Raw();
+      } else if (!window._lastTier1RawRecord) {
         window.fetchAdminTier1Raw();
       }
     }
   } else {
-    if (diffGrid) diffGrid.classList.add("it-team-mode");
-    if (tier1Card) tier1Card.style.display = "none";
+    if (diffGrid) {
+      diffGrid.classList.add("it-team-mode");
+      diffGrid.style.display = "grid";
+      diffGrid.style.gridTemplateColumns = "1fr";
+    }
+    if (tier1Card) {
+      tier1Card.style.setProperty("display", "none", "important");
+      tier1Card.style.visibility = "hidden";
+    }
+    if (tier2Card) {
+      tier2Card.style.display = "block";
+      tier2Card.style.visibility = "visible";
+    }
     if (rawPre) {
-      rawPre.textContent = "// Tier 1 Customer Local Data is restricted for IT Team role.";
+      rawPre.textContent = "";
     }
   }
 

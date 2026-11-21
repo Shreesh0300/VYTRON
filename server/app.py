@@ -263,6 +263,16 @@ async def get_tier1_raw_telemetry(
         )
 
     raw_preview = simulator.egress_engine.get_tier1_raw_preview()
+    if raw_preview is None or not getattr(simulator, "collector_connected", True):
+        return {
+            "status": "unavailable",
+            "authorization_mode": "CUSTOMER_LOCAL_ON_PREM_AUTHORIZED",
+            "audited_by": user.get("email"),
+            "raw_tier1_record": None,
+            "message": "Customer-local Tier 1 data unavailable – collector connection required.",
+            "tenant_id": target_tenant
+        }
+
     return {
         "status": "authorized",
         "authorization_mode": "CUSTOMER_LOCAL_ON_PREM_AUTHORIZED",
