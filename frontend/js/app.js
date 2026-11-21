@@ -719,6 +719,10 @@ window.updateEgressProofRoleView = function() {
       egressRoleBadge.textContent = "ROLE: ADMIN (FULL AUDIT & COMPARISON VIEW)";
       egressRoleBadge.className = "egress-role-badge admin-mode";
     }
+    const quickBtnText = document.getElementById("btnQuickToggleRoleText");
+    if (quickBtnText) {
+      quickBtnText.textContent = "Switch to IT Team View (Tier 2 Only)";
+    }
 
     // Instantly populate Tier 1 and Tier 2 from latest snapshot if available
     const latest = window.AppState?.latestSnapshot?.egress_proof?.latest;
@@ -757,6 +761,10 @@ window.updateEgressProofRoleView = function() {
     if (egressRoleBadge) {
       egressRoleBadge.textContent = "ROLE: IT TEAM (RESTRICTED TIER 2 VIEW)";
       egressRoleBadge.className = "egress-role-badge";
+    }
+    const quickBtnText = document.getElementById("btnQuickToggleRoleText");
+    if (quickBtnText) {
+      quickBtnText.textContent = "Switch to Admin View (Both Tiers)";
     }
     if (rawPre) {
       rawPre.textContent = "// Tier 1 Customer Local Data is restricted for IT Team role.";

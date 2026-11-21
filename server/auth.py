@@ -187,12 +187,12 @@ def resolve_authorized_role(email: str, requested_role: str, existing_role: Opti
     """
     CRITICAL SECURITY ENFORCEMENT:
     - Never trusts requested_role alone.
-    - If user requests 'admin':
-        1. Allowed IF user's verified email is in INITIAL_ADMIN_EMAILS.
-        2. Allowed IF user was already approved as 'admin' in database.
-        3. REJECTED otherwise: user is downgraded to 'it_team' with 'pending_admin_approval' status.
-    - If user requests 'it_team':
-        Granted 'it_team' with 'active' status.
+    - If user's verified email is in INITIAL_ADMIN_EMAILS or previously approved as 'admin',
+      they are ALWAYS authorized as 'admin'.
+    - If user requests 'admin' but is not pre-authorized:
+      Downgraded to 'it_team' with 'pending_admin_approval' status.
+    - Otherwise:
+      Granted 'it_team' with 'active' status.
 
     Returns:
         (authorized_role, account_status, security_notice_message)
@@ -200,17 +200,17 @@ def resolve_authorized_role(email: str, requested_role: str, existing_role: Opti
     email_clean = email.lower().strip()
     is_preauthorized_admin = email_clean in INITIAL_ADMIN_EMAILS or existing_role == "admin"
 
+    if is_preauthorized_admin:
+        return "admin", "active", "Welcome Administrator. Platform configuration, user management, and dual-tier data audit granted."
+
     if requested_role.lower() == "admin":
-        if is_preauthorized_admin:
-            return "admin", "active", "Welcome Administrator. Platform configuration and user management granted."
-        else:
-            # Security Rule: Deny privilege escalation
-            return (
-                "it_team",
-                "pending_admin_approval",
-                "Administrator role requires authorization. Your request was submitted for review; "
-                "you have been provisioned with IT Team permissions in the interim."
-            )
+        # Security Rule: Deny privilege escalation
+        return (
+            "it_team",
+            "pending_admin_approval",
+            "Administrator role requires authorization. Your request was submitted for review; "
+            "you have been provisioned with IT Team permissions in the interim."
+        )
     else:
         # User requested IT Team role
         return "it_team", "active", "Welcome to VYTRON. IT Team operational monitoring permissions granted."

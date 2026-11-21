@@ -58,6 +58,11 @@ class TestGoogleAuthAndRoleAuthorization(unittest.TestCase):
         conn.commit()
         conn.close()
 
+    @classmethod
+    def tearDownClass(cls):
+        """Restore initial pre-authorized administrator accounts after test suite completes."""
+        init_auth_db()
+
     # 1. Unauthenticated user
     def test_01_unauthenticated_user_access(self):
         res = client.get("/api/auth/me")

@@ -80,7 +80,7 @@ const AuthManager = {
         return;
       }
 
-      const roleSwitchBtn = e.target.closest("#btnSwitchActiveRole");
+      const roleSwitchBtn = e.target.closest("#btnSwitchActiveRole") || e.target.closest("#btnQuickToggleRole");
       if (roleSwitchBtn) {
         e.preventDefault();
         const nextRole = this.currentUser && this.currentUser.authorized_role === "admin" ? "it_team" : "admin";
