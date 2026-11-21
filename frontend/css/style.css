@@ -2983,9 +2983,11 @@ body {
   color: #fbbf24;
 }
 
-/* ── Role-Based Chatbot Visibility (Removed for Admin Login) ─────────────── */
+/* ── Role-Based UI Visibility (Removed for Admin Login) ───────────────────── */
 
 body.role-admin #headerChatbotBtn,
-body.role-admin .ai-chatbot-cta-box {
+body.role-admin .ai-chatbot-cta-box,
+body.role-admin #modalAiSection,
+body.role-admin .ai-troubleshoot-box {
   display: none !important;
 }

@@ -661,6 +661,12 @@ window.updateEgressProofRoleView = function() {
     chatbotBtn.style.display = isAd ? "none" : "inline-flex";
   }
 
+  // Hide AI Troubleshooting Section in Admin login
+  const aiSection = document.getElementById("modalAiSection");
+  if (aiSection) {
+    aiSection.style.display = isAd ? "none" : "";
+  }
+
   const diffGrid = document.getElementById("egressDiffGrid");
   const tier1Card = document.getElementById("egressTier1Card");
   const itPrivacyBanner = document.getElementById("itPrivacyBanner");

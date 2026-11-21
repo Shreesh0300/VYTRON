@@ -229,6 +229,10 @@ const AuthManager = {
     const chatbotBtn = document.getElementById("headerChatbotBtn");
     if (chatbotBtn) chatbotBtn.style.display = "inline-flex";
 
+    // AI Troubleshooting visible for unauthenticated
+    const aiSection = document.getElementById("modalAiSection");
+    if (aiSection) aiSection.style.display = "";
+
     if (!this.elements.headerContainer) return;
     this.elements.headerContainer.innerHTML = `
       <button id="btnOpenLoginModal" class="btn-auth-login" title="Sign in to VYTRON">
@@ -263,6 +267,12 @@ const AuthManager = {
     const chatbotBtn = document.getElementById("headerChatbotBtn");
     if (chatbotBtn) {
       chatbotBtn.style.display = isAd ? "none" : "inline-flex";
+    }
+
+    // Role-based AI troubleshooting visibility: Hide completely for Admin
+    const aiSection = document.getElementById("modalAiSection");
+    if (aiSection) {
+      aiSection.style.display = isAd ? "none" : "";
     }
 
     if (window.updateEgressProofRoleView) window.updateEgressProofRoleView();
