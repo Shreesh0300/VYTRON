@@ -296,20 +296,19 @@ const ChatApp = {
 
   appendUserMessage(text) {
     if (!this.elements.messagesContainer) return;
-    const timeStr = new Date().toLocaleTimeString();
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const row = document.createElement("div");
     row.className = "chat-bubble-row user-row";
     row.innerHTML = `
       <div class="chat-bubble-card user-bubble">
         <div class="bubble-header">
-          <span class="bubble-sender">IT Manager</span>
+          <span class="bubble-sender">You</span>
           <span class="bubble-time">${timeStr}</span>
         </div>
         <div class="bubble-body">
           <p>${this.escapeHtml(text)}</p>
         </div>
       </div>
-      <div class="avatar-badge user-avatar">IT</div>
     `;
     this.elements.messagesContainer.appendChild(row);
     this.scrollToBottom();
@@ -317,7 +316,7 @@ const ChatApp = {
 
   appendAssistantMessage(data) {
     if (!this.elements.messagesContainer) return;
-    const timeStr = new Date().toLocaleTimeString();
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const formattedHtml = this.formatMarkdown(data.answer || "No response generated.");
 
     // Context used tag
@@ -329,10 +328,16 @@ const ChatApp = {
     const row = document.createElement("div");
     row.className = "chat-bubble-row assistant-row";
     row.innerHTML = `
-      <div class="avatar-badge assistant-avatar">AI</div>
+      <div class="avatar-badge assistant-avatar">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+          <polyline points="2 17 12 22 22 17"></polyline>
+          <polyline points="2 12 12 17 22 12"></polyline>
+        </svg>
+      </div>
       <div class="chat-bubble-card assistant-bubble">
         <div class="bubble-header">
-          <span class="bubble-sender">VYTRON AI IT Support Assistant</span>
+          <span class="bubble-sender">VYTRON Assistant</span>
           <div style="display:flex; align-items:center; gap:8px;">
             ${contextTag}
             <span class="bubble-time">${timeStr}</span>
@@ -349,14 +354,14 @@ const ChatApp = {
 
   appendErrorMessage(errorText) {
     if (!this.elements.messagesContainer) return;
-    const timeStr = new Date().toLocaleTimeString();
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const row = document.createElement("div");
     row.className = "chat-bubble-row assistant-row";
     row.innerHTML = `
-      <div class="avatar-badge assistant-avatar" style="background:#ef4444;">!</div>
-      <div class="chat-bubble-card assistant-bubble" style="border-color: rgba(239, 68, 68, 0.4);">
+      <div class="avatar-badge assistant-avatar" style="background:rgba(239,68,68,0.15); border-color:rgba(239,68,68,0.3); color:#f87171;">!</div>
+      <div class="chat-bubble-card assistant-bubble" style="border-color: rgba(239, 68, 68, 0.25);">
         <div class="bubble-header">
-          <span class="bubble-sender" style="color:#f87171;">System Notification</span>
+          <span class="bubble-sender" style="color:#f87171;">System Notice</span>
           <span class="bubble-time">${timeStr}</span>
         </div>
         <div class="bubble-body">
@@ -385,17 +390,23 @@ const ChatApp = {
 
     // Keep only welcome message
     if (this.elements.messagesContainer) {
-      const timeStr = new Date().toLocaleTimeString();
+      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       this.elements.messagesContainer.innerHTML = `
         <div class="chat-bubble-row assistant-row">
-          <div class="avatar-badge assistant-avatar">AI</div>
+          <div class="avatar-badge assistant-avatar">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+              <polyline points="2 17 12 22 22 17"></polyline>
+              <polyline points="2 12 12 17 22 12"></polyline>
+            </svg>
+          </div>
           <div class="chat-bubble-card assistant-bubble">
             <div class="bubble-header">
-              <span class="bubble-sender">VYTRON AI IT Support Assistant</span>
+              <span class="bubble-sender">VYTRON Assistant</span>
               <span class="bubble-time">${timeStr}</span>
             </div>
             <div class="bubble-body">
-              <p>Conversation history cleared. I am ready to assist with your next infrastructure operations inquiry.</p>
+              <p>Conversation history cleared. Ready for your next inquiry.</p>
             </div>
           </div>
         </div>
