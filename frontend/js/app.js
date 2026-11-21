@@ -731,20 +731,11 @@ function renderEgressProof(egressProof, dataFreshness) {
   const rawPre = document.getElementById("egressRawJson");
   if (rawPre) {
     if (isItTeam) {
-      // IT Team: never show raw data
+      // IT Team: strictly restricted from accessing raw telemetry
       rawPre.textContent = "// Tier 1 Customer Local Data is restricted for IT Team role.";
-    } else if (isAd) {
-      // Admin: fetch live data from customer-local inspection source
-      const now = Date.now();
-      if (!window._lastTier1FetchTime || now - window._lastTier1FetchTime > 2500) {
-        window._lastTier1FetchTime = now;
-        window.fetchAdminTier1Raw();
-      } else if (window._lastTier1RawRecord) {
-        rawPre.textContent = JSON.stringify(window._lastTier1RawRecord, null, 2);
-      }
     } else {
-      // Unauthenticated default: show raw data from WebSocket snapshot (original behavior)
-      const rawData = latest?.raw_tier1_preview || latest?.raw_tier1_record;
+      // Admin or default view: render raw customer local telemetry details as before
+      const rawData = latest?.raw_tier1_preview || latest?.raw_tier1_record || window._lastTier1RawRecord;
       if (rawData) {
         rawPre.textContent = JSON.stringify(rawData, null, 2);
       }

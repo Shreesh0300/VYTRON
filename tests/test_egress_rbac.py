@@ -161,17 +161,18 @@ class TestEgressRBAC(unittest.TestCase):
         self.assertIn("Tenant isolation policy violation", res_policy.json()["detail"])
         print("[PASS] TEST 6: Foreign tenant queries are strictly rejected with 403 Forbidden.")
 
-    # 7. WebSocket / Public snapshot contains zero raw secrets
-    def test_07_snapshot_contains_zero_raw_secrets(self):
-        snapshot = simulator.get_snapshot()
-        egress = snapshot.get("egress_proof", {})
-        latest = egress.get("latest", {})
+    # 7. IT Team egress proof endpoint contains zero raw secrets
+    def test_07_it_team_egress_proof_contains_zero_raw_secrets(self):
+        res = client.get("/api/egress/proof", cookies={COOKIE_NAME: self.it_session_id})
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        latest = data.get("latest", {})
         self.assertNotIn("raw_tier1_preview", latest)
 
-        for hist in egress.get("history", []):
+        for hist in data.get("history", []):
             self.assertNotIn("raw_tier1_preview", hist)
 
-        print("[PASS] TEST 7: WebSocket / snapshot egress proof contains ZERO raw secrets.")
+        print("[PASS] TEST 7: IT Team egress proof endpoint contains ZERO raw secrets.")
 
     # 8. Data classification: restricted vs permitted
     def test_08_data_classification_policy(self):

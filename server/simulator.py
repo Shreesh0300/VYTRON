@@ -382,8 +382,8 @@ class InfrastructureSimulator:
                 "timestamp_utc": now_utc,
             },
             "egress_proof": {
-                "latest": self.egress_engine.get_latest_proof(include_raw=False),
-                "history": self.egress_engine.get_history(6, include_raw=False),
+                "latest": self.egress_engine.get_latest_proof(include_raw=True),
+                "history": self.egress_engine.get_history(6),
                 "stats": self.egress_engine.get_stats(),
             },
             "servers": servers_data,

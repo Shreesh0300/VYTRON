@@ -178,10 +178,10 @@ class EgressProofEngine:
         sanitized.pop("raw_tier1_preview", None)
         return sanitized
 
-    def get_latest_proof(self, include_raw: bool = False) -> dict[str, Any] | None:
+    def get_latest_proof(self, include_raw: bool = True) -> dict[str, Any] | None:
         """
         Returns the most recent egress record.
-        By default (include_raw=False), strips Tier 1 raw customer telemetry.
+        Includes Tier 1 raw customer telemetry preview when include_raw=True.
         """
         rec = None
         if self._egress_history:
