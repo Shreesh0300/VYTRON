@@ -378,33 +378,53 @@
       <div class="section-header">
         <div class="header-left">
           <h2 class="section-title">SECTION E: EGRESS PROOF &amp; DATA PRIVACY AUDIT PANEL</h2>
+          <span class="egress-role-badge" id="egressRoleBadge">ROLE: IT TEAM (RESTRICTED TIER 2 VIEW)</span>
         </div>
-
+        <div class="header-right">
+          <button id="btnToggleOutage" class="btn btn-sm btn-outline-warning" onclick="toggleOutageSimulation()">
+            <span id="outageBtnText">Simulate Network Outage (Buffer Test)</span>
+          </button>
+        </div>
       </div>
 
+      <!-- IT Team Privacy Assurance Callout -->
+      <div class="it-privacy-banner" id="itPrivacyBanner">
+        <div class="privacy-banner-icon">🔒</div>
+        <div class="privacy-banner-content">
+          <strong>Local-First Trust Boundary Active (IT Team Role):</strong>
+          <p>Customer Tier 1 raw telemetry, internal IP addresses, and operational secrets are strictly kept on customer on-premises infrastructure. IT Team members are provisioned with sanitized Tier 2 SaaS metadata and transmission audit proofs.</p>
+        </div>
+      </div>
 
-
-      <!-- Live Side-by-Side Comparison -->
-      <div class="egress-diff-grid">
-        <!-- Left: Tier 1 Raw Local Telemetry -->
-        <div class="egress-diff-card tier1-card">
+      <!-- Live Comparison Grid -->
+      <div class="egress-diff-grid it-team-mode" id="egressDiffGrid">
+        <!-- Left: Tier 1 Raw Local Telemetry (Admin/Local Inspection Mode Only) -->
+        <div class="egress-diff-card tier1-card" id="egressTier1Card" style="display: none;">
           <div class="diff-card-header">
             <div class="diff-header-title">
               <span class="diff-badge tier1-badge">TIER 1: CUSTOMER LOCAL DATA</span>
-              <span class="diff-subtitle">Raw Logs, Internal IPs &amp; Injected Secrets (Kept Local)</span>
+              <span class="diff-subtitle" id="tier1Subtitle">Customer On-Premises Local Inspection Gate</span>
             </div>
-            <span class="privacy-status-pill blocked">BLOCKED FROM EGRESS</span>
+            <span class="privacy-status-pill blocked" id="tier1StatusPill">LOCAL AUTH GATE</span>
           </div>
-          <div class="diff-code-wrapper">
-            <pre class="diff-json" id="egressRawJson">// Waiting for local collector telemetry stream...</pre>
+          <div class="diff-code-wrapper" id="tier1CodeWrapper">
+            <div class="tier1-local-gate" id="tier1LocalGateBox">
+              <div class="gate-icon">🔐</div>
+              <div class="gate-title">Customer-Local Authorization Required</div>
+              <p class="gate-desc">Central SaaS Administrators do not automatically receive raw customer credentials or internal IPs. Provide customer-local authorization to inspect on-premise payloads.</p>
+              <button class="btn btn-sm btn-outline-cyan" id="btnRequestLocalInspection" onclick="requestCustomerLocalInspection()">
+                Authenticate Customer-Local Inspection
+              </button>
+            </div>
+            <pre class="diff-json hidden" id="egressRawJson">// Local raw telemetry preview...</pre>
           </div>
           <div class="diff-card-footer">
-            <span class="footer-note">🚫 Red fields (credentials, internal IPs, raw queries) are stripped by policy before transmission.</span>
+            <span class="footer-note" id="tier1FooterNote">🛡️ Customer-local secrets remain on-premises unless explicitly audited under authorized local inspection.</span>
           </div>
         </div>
 
         <!-- Right: Tier 2 SaaS Transmitted Metadata -->
-        <div class="egress-diff-card tier2-card">
+        <div class="egress-diff-card tier2-card" id="egressTier2Card">
           <div class="diff-card-header">
             <div class="diff-header-title">
               <span class="diff-badge tier2-badge">TIER 2: SAAS METADATA PAYLOAD</span>
@@ -723,7 +743,7 @@
   <script src="js/chart.min.js?v=2.3"></script>
   <script src="js/charts.js?v=2.3"></script>
   <script src="js/modal.js?v=2.3"></script>
-  <script src="js/app.js?v=2.5"></script>
-  <script src="js/auth.js?v=3.1"></script>
+  <script src="js/app.js?v=2.6"></script>
+  <script src="js/auth.js?v=3.2"></script>
 </body>
 </html>

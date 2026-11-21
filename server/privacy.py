@@ -172,20 +172,51 @@ class EgressProofEngine:
 
         return record
 
-    def get_latest_proof(self) -> dict[str, Any] | None:
-        """Returns the most recent egress record for live dashboard inspection."""
-        if self._egress_history:
-            return self._egress_history[0]
-        if self._buffer:
-            return self._buffer[-1]
-        return None
+    def _sanitize_record(self, record: dict[str, Any]) -> dict[str, Any]:
+        """Strips Tier 1 raw customer telemetry and sensitive secrets from egress records."""
+        sanitized = dict(record)
+        sanitized.pop("raw_tier1_preview", None)
+        return sanitized
 
-    def get_history(self, limit: int = 15) -> list[dict[str, Any]]:
-        """Returns recent egress history records for the audit log table."""
+    def get_latest_proof(self, include_raw: bool = False) -> dict[str, Any] | None:
+        """
+        Returns the most recent egress record.
+        By default (include_raw=False), strips Tier 1 raw customer telemetry.
+        """
+        rec = None
+        if self._egress_history:
+            rec = self._egress_history[0]
+        elif self._buffer:
+            rec = self._buffer[-1]
+
+        if not rec:
+            return None
+        if include_raw:
+            return dict(rec)
+        return self._sanitize_record(rec)
+
+    def get_history(self, limit: int = 15, include_raw: bool = False) -> list[dict[str, Any]]:
+        """
+        Returns recent egress history records for the audit log table.
+        By default (include_raw=False), strips Tier 1 raw customer telemetry from each entry.
+        """
         if self._outage_simulated and self._buffer:
             combined = list(reversed(self._buffer)) + list(self._egress_history)
-            return combined[:limit]
-        return self._egress_history[:limit]
+        else:
+            combined = self._egress_history
+
+        records = combined[:limit]
+        if include_raw:
+            return [dict(r) for r in records]
+        return [self._sanitize_record(r) for r in records]
+
+    def get_tier1_raw_preview(self) -> dict[str, Any] | None:
+        """Returns the raw Tier 1 customer local telemetry preview for authorized local inspection."""
+        if self._egress_history:
+            return self._egress_history[0].get("raw_tier1_preview")
+        if self._buffer:
+            return self._buffer[-1].get("raw_tier1_preview")
+        return None
 
     def get_stats(self) -> dict[str, Any]:
         """Returns summary statistics of the privacy filter."""

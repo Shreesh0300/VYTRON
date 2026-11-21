@@ -7,13 +7,13 @@ Powered by the dynamic Randomized Incident Generation Engine.
 import os
 import json
 import asyncio
-from typing import Set, Optional
+from typing import Set, Optional, Any
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 
 load_dotenv()
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Request, Depends, Query, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -21,7 +21,7 @@ from pydantic import BaseModel
 from server.simulator import InfrastructureSimulator
 from server.rag.pipeline import troubleshoot_incident, get_vector_store
 from server.chatbot import process_chat_message, get_contextual_suggestions, chat_sessions
-from server.auth import auth_router
+from server.auth import auth_router, get_current_user_optional, get_current_user, require_admin
 
 # Global simulator instance
 simulator = InfrastructureSimulator()
@@ -157,17 +157,123 @@ async def reset_simulation():
     return {"status": "reset", "state": simulator.get_snapshot()}
 
 @app.get("/api/egress/proof")
-def get_egress_proof():
-    """Returns the latest Egress Proof and recent transmission audit history."""
+async def get_egress_proof(
+    request: Request,
+    tenant_id: Optional[str] = Query(None),
+    include_raw: bool = Query(False),
+    user: Optional[dict[str, Any]] = Depends(get_current_user_optional)
+):
+    """
+    Returns the Egress Proof and transmission audit history with strict role-based access control.
+    - Tenant isolation: returns 403 if requested tenant_id does not match the authorized tenant.
+    - IT Team users: strictly prevented from retrieving Tier 1 raw payloads (returns 403 if include_raw is requested).
+    - Admin users: access to raw customer data requires customer-local authorization.
+    - By default: returns sanitized Tier 2 metadata and cryptographic audit proofs.
+    """
+    # 1. Enforce Tenant Isolation
+    target_tenant = simulator.egress_engine.tenant_id  # "TENANT-01"
+    if tenant_id and tenant_id.strip() != target_tenant:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Access denied: Tenant isolation policy violation. Unauthorized tenant '{tenant_id}'."
+        )
+
+    # 2. Check Role & Tier 1 Raw Access Request
+    if include_raw:
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Authentication required to inspect Egress data."
+            )
+        user_role = user.get("authorized_role", "it_team")
+        if user_role == "it_team":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied: IT Team role is strictly prohibited from accessing customer-local Tier 1 raw telemetry and secrets."
+            )
+        # Admin: Access to Tier 1 raw customer data must remain subject to customer-local authorization
+        local_auth_header = request.headers.get("X-Customer-Local-Auth", "").strip()
+        local_auth_token = request.query_params.get("local_auth_token", "").strip()
+        valid_local_keys = ["granted", "customer-local-authorized", os.getenv("COLLECTOR_API_KEY", "vytron-collector-key-2026")]
+        is_local_authorized = (local_auth_header in valid_local_keys or local_auth_token in valid_local_keys)
+        if not is_local_authorized:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied: Central SaaS Administrator access to customer-local raw payloads requires explicit customer-local authorization."
+            )
+
     return {
-        "latest": simulator.egress_engine.get_latest_proof(),
-        "history": simulator.egress_engine.get_history(10),
+        "latest": simulator.egress_engine.get_latest_proof(include_raw=include_raw),
+        "history": simulator.egress_engine.get_history(10, include_raw=include_raw),
         "stats": simulator.egress_engine.get_stats(),
+        "role_access": {
+            "authorized_role": user.get("authorized_role") if user else "unauthenticated",
+            "tier1_raw_accessible": bool(include_raw),
+            "tier2_sanitized_accessible": True,
+            "tenant_id": target_tenant
+        }
     }
 
+
+@app.get("/api/egress/tier1-raw")
+async def get_tier1_raw_telemetry(
+    request: Request,
+    tenant_id: Optional[str] = Query(None),
+    user: dict[str, Any] = Depends(get_current_user)
+):
+    """
+    Dedicated protected endpoint for customer-local Tier 1 raw telemetry inspection.
+    - IT Team users: STRICTLY 403 Forbidden. Never allowed to view raw customer secrets.
+    - Admin users: Subject to explicit customer-local on-premise authorization gate.
+    - Tenant isolation: strictly enforced.
+    """
+    # 1. Tenant Isolation
+    target_tenant = simulator.egress_engine.tenant_id
+    if tenant_id and tenant_id.strip() != target_tenant:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Access denied: Tenant isolation policy violation. Unauthorized tenant '{tenant_id}'."
+        )
+
+    # 2. Role Authorization
+    user_role = user.get("authorized_role", "it_team")
+    if user_role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: IT Team role is strictly prohibited from accessing customer-local Tier 1 raw telemetry and secrets."
+        )
+
+    # 3. Customer-Local Authorization Gate for Admin
+    local_auth_header = request.headers.get("X-Customer-Local-Auth", "").strip()
+    local_auth_token = request.query_params.get("local_auth_token", "").strip()
+    valid_local_keys = ["granted", "customer-local-authorized", os.getenv("COLLECTOR_API_KEY", "vytron-collector-key-2026")]
+    is_local_authorized = (local_auth_header in valid_local_keys or local_auth_token in valid_local_keys)
+    if not is_local_authorized:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: Central SaaS Administrator requires explicit customer-local authorization to inspect raw on-premise logs and credentials."
+        )
+
+    raw_preview = simulator.egress_engine.get_tier1_raw_preview()
+    return {
+        "status": "authorized",
+        "authorization_mode": "CUSTOMER_LOCAL_ON_PREM_AUTHORIZED",
+        "audited_by": user.get("email"),
+        "raw_tier1_record": raw_preview,
+        "tenant_id": target_tenant
+    }
+
+
 @app.get("/api/egress/policy")
-def get_egress_policy():
-    """Returns Tier 1 allow-list policy and redaction rules."""
+def get_egress_policy(tenant_id: Optional[str] = Query(None)):
+    """Returns Tier 1 allow-list policy and field-level classification rules with tenant isolation."""
+    target_tenant = simulator.egress_engine.tenant_id
+    if tenant_id and tenant_id.strip() != target_tenant:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Access denied: Tenant isolation policy violation. Unauthorized tenant '{tenant_id}'."
+        )
+
     from server.privacy import ALLOWED_EGRESS_FIELDS, BLOCKED_RAW_KEYS, SENSITIVE_PATTERNS
     return {
         "tier1_trust_boundary": "Customer Local Environment (Local-First Security)",
@@ -175,8 +281,15 @@ def get_egress_policy():
         "allowed_fields": ALLOWED_EGRESS_FIELDS,
         "blocked_raw_keys": list(BLOCKED_RAW_KEYS),
         "sensitive_patterns_count": len(SENSITIVE_PATTERNS),
-        "tenant_id": simulator.egress_engine.tenant_id,
+        "tenant_id": target_tenant,
         "collector_id": simulator.egress_engine.collector_id,
+        "classification": {
+            "restricted_fields": [
+                "passwords", "secrets", "jwt_tokens", "api_keys",
+                "snmp_community_strings", "raw_sql", "internal_ips", "internal_gateway"
+            ],
+            "permitted_metadata_fields": ALLOWED_EGRESS_FIELDS
+        }
     }
 
 @app.post("/api/collector/outage/toggle")

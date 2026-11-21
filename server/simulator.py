@@ -37,7 +37,7 @@ class InfrastructureSimulator:
         #   "history": {param: deque of {"time": str, "value": float}}
         # }
         self.servers: dict[str, dict[str, Any]] = {}
-        self._init_servers()
+        self.reset()
 
     def _init_servers(self):
         now_str = time.strftime("%H:%M:%S")
@@ -382,8 +382,8 @@ class InfrastructureSimulator:
                 "timestamp_utc": now_utc,
             },
             "egress_proof": {
-                "latest": self.egress_engine.get_latest_proof(),
-                "history": self.egress_engine.get_history(6),
+                "latest": self.egress_engine.get_latest_proof(include_raw=False),
+                "history": self.egress_engine.get_history(6, include_raw=False),
                 "stats": self.egress_engine.get_stats(),
             },
             "servers": servers_data,

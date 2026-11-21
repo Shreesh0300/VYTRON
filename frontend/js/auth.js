@@ -208,6 +208,7 @@ const AuthManager = {
         if (data.authenticated) {
           this.currentUser = data;
           this.renderHeaderAuthenticated();
+          if (window.updateEgressProofRoleView) window.updateEgressProofRoleView();
           return;
         }
       }
@@ -216,6 +217,7 @@ const AuthManager = {
     }
     this.currentUser = null;
     this.renderHeaderUnauthenticated();
+    if (window.updateEgressProofRoleView) window.updateEgressProofRoleView();
   },
 
   renderHeaderUnauthenticated() {
@@ -229,10 +231,13 @@ const AuthManager = {
         <span>Login / Sign Up</span>
       </button>
     `;
+    if (window.updateEgressProofRoleView) window.updateEgressProofRoleView();
   },
 
   renderHeaderAuthenticated() {
     if (!this.elements.headerContainer || !this.currentUser) return;
+
+    if (window.updateEgressProofRoleView) window.updateEgressProofRoleView();
 
     const u = this.currentUser;
     const isAd = u.authorized_role === "admin";
@@ -472,8 +477,10 @@ const AuthManager = {
       console.warn("[Auth] Logout request failed:", err);
     }
     this.currentUser = null;
+    window._localInspectionAuthorized = false;
     this.renderHeaderUnauthenticated();
     this.closeUserDropdown();
+    if (window.updateEgressProofRoleView) window.updateEgressProofRoleView();
   },
 
   // ── Admin Modal Operations ────────────────────────────────────────────────
@@ -568,6 +575,10 @@ const AuthManager = {
         const err = await res.json();
         alert(`Failed to assign role: ${err.detail || "Server error"}`);
       } else {
+        if (this.currentUser && this.currentUser.user_id === userId) {
+          this.currentUser.authorized_role = newRole;
+          this.renderHeaderAuthenticated();
+        }
         this.loadAdminUsers();
       }
     } catch (err) {
