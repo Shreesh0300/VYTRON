@@ -655,6 +655,12 @@ window.updateEgressProofRoleView = function() {
   const isAd = userRole === "admin";
   const isItTeam = userRole === "it_team";
 
+  // Hide IT Support Chatbot in Admin login
+  const chatbotBtn = document.getElementById("headerChatbotBtn");
+  if (chatbotBtn) {
+    chatbotBtn.style.display = isAd ? "none" : "inline-flex";
+  }
+
   const diffGrid = document.getElementById("egressDiffGrid");
   const tier1Card = document.getElementById("egressTier1Card");
   const itPrivacyBanner = document.getElementById("itPrivacyBanner");

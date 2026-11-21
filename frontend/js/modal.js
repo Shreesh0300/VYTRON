@@ -272,6 +272,9 @@ const IncidentModal = {
       </div>
     `;
 
+    const currentUser = window.AuthManager ? window.AuthManager.currentUser : null;
+    const isAd = currentUser && currentUser.authorized_role === "admin";
+
     this.aiContent.innerHTML = `
       ${explanationHtml}
       ${causesHtml}
@@ -279,7 +282,7 @@ const IncidentModal = {
       ${stepsHtml}
       ${solutionsHtml}
       ${outcomeHtml}
-      ${chatbotCtaHtml}
+      ${isAd ? "" : chatbotCtaHtml}
     `;
 
     this.aiContent.style.display = "flex";

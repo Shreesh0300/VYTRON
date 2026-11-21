@@ -221,6 +221,14 @@ const AuthManager = {
   },
 
   renderHeaderUnauthenticated() {
+    // Reset body role classes
+    document.body.classList.remove("role-admin");
+    document.body.classList.remove("role-it-team");
+
+    // Chatbot visible for unauthenticated
+    const chatbotBtn = document.getElementById("headerChatbotBtn");
+    if (chatbotBtn) chatbotBtn.style.display = "inline-flex";
+
     if (!this.elements.headerContainer) return;
     this.elements.headerContainer.innerHTML = `
       <button id="btnOpenLoginModal" class="btn-auth-login" title="Sign in to VYTRON">
@@ -237,12 +245,27 @@ const AuthManager = {
   renderHeaderAuthenticated() {
     if (!this.elements.headerContainer || !this.currentUser) return;
 
-    if (window.updateEgressProofRoleView) window.updateEgressProofRoleView();
-
     const u = this.currentUser;
     const isAd = u.authorized_role === "admin";
     const roleBadgeClass = isAd ? "role-pill-admin" : "role-pill-it";
     const roleLabel = isAd ? "ADMIN" : "IT TEAM";
+
+    // Set body role classes
+    if (isAd) {
+      document.body.classList.add("role-admin");
+      document.body.classList.remove("role-it-team");
+    } else {
+      document.body.classList.remove("role-admin");
+      document.body.classList.add("role-it-team");
+    }
+
+    // Role-based Chatbot button visibility: Remove in Admin login
+    const chatbotBtn = document.getElementById("headerChatbotBtn");
+    if (chatbotBtn) {
+      chatbotBtn.style.display = isAd ? "none" : "inline-flex";
+    }
+
+    if (window.updateEgressProofRoleView) window.updateEgressProofRoleView();
 
     // Avatar image or initials
     let avatarHtml = "";
