@@ -80,6 +80,14 @@ const AuthManager = {
         return;
       }
 
+      const roleSwitchBtn = e.target.closest("#btnSwitchActiveRole");
+      if (roleSwitchBtn) {
+        e.preventDefault();
+        const nextRole = this.currentUser && this.currentUser.authorized_role === "admin" ? "it_team" : "admin";
+        this.switchRole(nextRole);
+        return;
+      }
+
       // Close modal when clicking directly on the backdrop outside the modal box
       if (e.target.id === "authModal") {
         this.closeModal();
@@ -347,6 +355,17 @@ const AuthManager = {
               </svg>
               <span>Open Monitoring Dashboard</span>
             </a>
+
+            <!-- Quick Role Switcher for Demonstrating Section E RBAC -->
+            <button id="btnSwitchActiveRole" class="dropdown-item-btn role-toggle-action" style="color:#38bdf8;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="17 1 21 5 17 9"></polyline>
+                <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+                <polyline points="7 23 3 19 7 15"></polyline>
+                <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
+              </svg>
+              <span>${isAd ? "Switch to IT Team View (Tier 2 Only)" : "Switch to Admin View (Both Tiers)"}</span>
+            </button>
 
             ${isAd ? `
               <button id="btnOpenAdminMgmt" class="dropdown-item-btn admin-action">
@@ -654,6 +673,24 @@ const AuthManager = {
       }
     } catch (err) {
       alert(`Role assignment error: ${err.message}`);
+    }
+  },
+
+  async switchRole(targetRole) {
+    try {
+      const res = await fetch("/api/auth/switch-role", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: targetRole })
+      });
+      if (res.ok) {
+        await this.checkSession();
+      } else {
+        const err = await res.json();
+        alert(`Cannot switch role: ${err.detail || "Unauthorized"}`);
+      }
+    } catch (err) {
+      console.warn("[Auth] Failed to switch role:", err);
     }
   },
 

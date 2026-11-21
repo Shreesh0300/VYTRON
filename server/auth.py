@@ -36,7 +36,7 @@ SESSION_SECRET = os.getenv("SESSION_SECRET", "vytron-secure-session-secret-chang
 # Comma-separated list of emails permitted to bootstrap as Administrator
 # Default fallback includes demo admin email
 INITIAL_ADMIN_EMAILS = [
-    e.strip().lower() for e in os.getenv("INITIAL_ADMIN_EMAILS", "admin@vytron.ai,shreesh107@gmail.com").split(",") if e.strip()
+    e.strip().lower() for e in os.getenv("INITIAL_ADMIN_EMAILS", "admin@vytron.ai,shreesh107@gmail.com,kodgeadarsh5268@gmail.com,iamnoob0300@gmail.com").split(",") if e.strip()
 ]
 
 # Database Path
@@ -88,6 +88,20 @@ def init_auth_db():
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_google_sub ON users (google_sub)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions (expires_at)")
 
+    # Seed initial administrators so their admin permissions persist across sessions
+    now_utc = datetime.now(timezone.utc).isoformat()
+    for idx, admin_email in enumerate(INITIAL_ADMIN_EMAILS, start=1):
+        clean_email = admin_email.strip().lower()
+        if not clean_email:
+            continue
+        sub = f"admin-preauthorized-{clean_email}"
+        name = clean_email.split("@")[0].replace(".", " ").title()
+        uid = f"USR-ADMIN-{idx:02d}"
+        cursor.execute("""
+            INSERT OR IGNORE INTO users (user_id, google_sub, name, email, picture, authorized_role, requested_role, account_status, created_at, last_login_at)
+            VALUES (?, ?, ?, ?, '', 'admin', 'admin', 'active', ?, ?)
+        """, (uid, sub, name, clean_email, now_utc, now_utc))
+
     conn.commit()
     conn.close()
 
@@ -106,6 +120,10 @@ class GoogleAuthRequest(BaseModel):
 class AssignRoleRequest(BaseModel):
     user_id: str
     new_role: str = Field(..., description="'it_team' or 'admin'")
+
+
+class SwitchRoleRequest(BaseModel):
+    role: str = Field(..., description="'it_team' or 'admin'")
 
 
 class AuthConfigResponse(BaseModel):
@@ -206,8 +224,8 @@ def upsert_user(google_sub: str, name: str, email: str, picture: str, requested_
     cursor = conn.cursor()
     now_utc = datetime.now(timezone.utc).isoformat()
 
-    # Check for existing user
-    cursor.execute("SELECT * FROM users WHERE google_sub = ?", (google_sub,))
+    # Check for existing user by google_sub or email
+    cursor.execute("SELECT * FROM users WHERE google_sub = ? OR LOWER(email) = LOWER(?)", (google_sub, email.strip()))
     existing = cursor.fetchone()
 
     existing_role = existing["authorized_role"] if existing else None
@@ -217,6 +235,7 @@ def upsert_user(google_sub: str, name: str, email: str, picture: str, requested_
         user_id = existing["user_id"]
         cursor.execute("""
             UPDATE users SET
+                google_sub = ?,
                 name = ?,
                 email = ?,
                 picture = ?,
@@ -225,7 +244,7 @@ def upsert_user(google_sub: str, name: str, email: str, picture: str, requested_
                 account_status = ?,
                 last_login_at = ?
             WHERE user_id = ?
-        """, (name, email, picture, authorized_role, requested_role, status, now_utc, user_id))
+        """, (google_sub, name, email, picture, authorized_role, requested_role, status, now_utc, user_id))
     else:
         # Generate stable user ID: USR-XXXXX
         user_count = cursor.execute("SELECT COUNT(*) FROM users").fetchone()[0]
@@ -453,6 +472,43 @@ async def api_logout(request: Request, response: Response):
 
     response.delete_cookie(key=COOKIE_NAME)
     return {"success": True, "message": "Successfully logged out."}
+
+
+@auth_router.post("/auth/switch-role")
+async def api_switch_role(req: SwitchRoleRequest, user: dict[str, Any] = Depends(get_current_user)):
+    """
+    Allows authorized administrators to toggle their active role view between 'admin' and 'it_team'
+    to evaluate and demonstrate Section E RBAC data filtering in real-time.
+    """
+    target_role = req.role.lower().strip()
+    if target_role not in ("admin", "it_team"):
+        raise HTTPException(status_code=400, detail="Invalid role. Must be 'admin' or 'it_team'.")
+
+    email_clean = user.get("email", "").lower().strip()
+    is_authorized_admin = (
+        email_clean in INITIAL_ADMIN_EMAILS or
+        user.get("authorized_role") == "admin" or
+        user.get("requested_role") == "admin"
+    )
+
+    if target_role == "admin" and not is_authorized_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Privilege escalation prohibited: Administrator role requires prior authorization."
+        )
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE users SET authorized_role = ?, requested_role = ? WHERE user_id = ?",
+                   (target_role, target_role, user["user_id"]))
+    conn.commit()
+    conn.close()
+
+    return {
+        "status": "success",
+        "new_role": target_role,
+        "message": f"Active role successfully switched to {target_role}."
+    }
 
 
 # ── Role-Guarded Administrative Endpoints ─────────────────────────────────────

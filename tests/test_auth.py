@@ -365,6 +365,30 @@ class TestGoogleAuthAndRoleAuthorization(unittest.TestCase):
             self.assertIn("servers", snap)
         print("[PASS] TEST 15: WebSocket connection enforces authentication barrier with 1008 Policy Violation.")
 
+    # 16. Dynamic Role Switcher: Authorized admin can switch role between admin and it_team
+    def test_16_switch_role(self):
+        user = upsert_user("sub-switch-test", "Switch Tester", "iamnoob0300@gmail.com", "", "admin")
+        sess_id = create_session(user["user_id"])
+
+        # Switch to it_team
+        res = client.post("/api/auth/switch-role", json={"role": "it_team"}, cookies={COOKIE_NAME: sess_id})
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.json()["new_role"], "it_team")
+
+        # Verify /api/auth/me reflects it_team
+        res_me = client.get("/api/auth/me", cookies={COOKIE_NAME: sess_id})
+        self.assertEqual(res_me.json()["authorized_role"], "it_team")
+
+        # Switch back to admin
+        res_admin = client.post("/api/auth/switch-role", json={"role": "admin"}, cookies={COOKIE_NAME: sess_id})
+        self.assertEqual(res_admin.status_code, 200)
+        self.assertEqual(res_admin.json()["new_role"], "admin")
+
+        # Verify /api/auth/me reflects admin
+        res_me2 = client.get("/api/auth/me", cookies={COOKIE_NAME: sess_id})
+        self.assertEqual(res_me2.json()["authorized_role"], "admin")
+        print("[PASS] TEST 16: Dynamic role switcher allows authorized admin to seamlessly toggle role.")
+
 
 if __name__ == "__main__":
     unittest.main()
