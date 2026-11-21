@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VYTRON AIOps — Autonomous Observability & Verifiable Incident Intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/hero.css?v=1.0">
+</head>
+<body class="hero-body">
+
+  <!-- Navigation Bar -->
+  <header class="hero-nav">
+    <a href="hero.html" class="hero-brand">
+      <div class="hero-logo-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+          <polyline points="2 17 12 22 22 17"></polyline>
+          <polyline points="2 12 12 17 22 12"></polyline>
+        </svg>
+      </div>
+      <div class="hero-brand-text">
+        <span>VYTRON</span>
+        <span class="hero-aiops-badge">AIOps</span>
+      </div>
+    </a>
+
+    <nav class="hero-nav-links">
+      <a href="#overview" class="hero-nav-link">Overview</a>
+      <a href="#fleet" class="hero-nav-link">5-Server Fleet</a>
+      <a href="#priority" class="hero-nav-link">Priority Queue</a>
+      <a href="#privacy" class="hero-nav-link">Data Privacy</a>
+      <a href="#ai-rag" class="hero-nav-link">RAG Troubleshooter</a>
+      <a href="#architecture" class="hero-nav-link">Architecture</a>
+    </nav>
+
+    <div class="hero-nav-actions">
+      <a href="chat.html" class="hero-btn hero-btn-cyan" title="Launch AI Support Chatbot">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+        <span>IT Chatbot</span>
+      </a>
+      <a href="index.html" class="hero-btn hero-btn-primary" title="Open Real-Time Monitoring Dashboard">
+        <span>Launch Dashboard</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </a>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <main>
+    <section class="hero-section" id="overview">
+      <div class="hero-pill-badge">
+        <span class="pulsing-dot"></span>
+        <span>NEXT-GEN AIOPS • ZERO DATA LEAKAGE • 5-SERVER OBSERVABILITY</span>
+      </div>
+
+      <h1 class="hero-headline">
+        Autonomous Infrastructure Observability &amp;
+        <span class="hero-headline-gradient">Verifiable Data Privacy</span>
+      </h1>
+
+      <p class="hero-subtitle">
+        VYTRON orchestrates multi-metric telemetry across critical enterprise nodes, detects anomalies in real-time with sub-second latency, auto-prioritizes P1–P4 incidents without alert fatigue, and guarantees 100% on-premises data isolation with cryptographic SHA-256 egress proof.
+      </p>
+
+      <div class="hero-cta-group">
+        <a href="index.html" class="hero-btn hero-btn-primary hero-btn-lg">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <polygon points="5 3 19 12 5 21 5 3" fill="currentColor"></polygon>
+          </svg>
+          <span>Launch Live Dashboard</span>
+        </a>
+        <a href="chat.html" class="hero-btn hero-btn-cyan hero-btn-lg">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <span>AI IT Manager Chatbot</span>
+        </a>
+        <a href="#architecture" class="hero-btn hero-btn-outline hero-btn-lg">
+          <span>Explore Architecture ↓</span>
+        </a>
+      </div>
+
+      <!-- Quick Stats Ribbon -->
+      <div class="hero-stats-ribbon">
+        <div class="hero-stat-card">
+          <div class="hero-stat-num stat-green">5 Nodes</div>
+          <div class="hero-stat-label">Fleet Monitored</div>
+        </div>
+        <div class="hero-stat-card">
+          <div class="hero-stat-num stat-cyan">100%</div>
+          <div class="hero-stat-label">Secrets Kept Local</div>
+        </div>
+        <div class="hero-stat-card">
+          <div class="hero-stat-num stat-amber">&lt; 1.2s</div>
+          <div class="hero-stat-label">Ingest Latency</div>
+        </div>
+        <div class="hero-stat-card">
+          <div class="hero-stat-num stat-red">P1 &gt; P4</div>
+          <div class="hero-stat-label">Strict Prioritization</div>
+        </div>
+        <div class="hero-stat-card">
+          <div class="hero-stat-num stat-purple">35k+ Chunks</div>
+          <div class="hero-stat-label">ChromaDB RAG Docs</div>
+        </div>
+      </div>
+
+      <!-- Showcase Browser Window Mock -->
+      <div class="hero-showcase-window" id="fleet">
+        <div class="showcase-header">
+          <div class="window-dots">
+            <span class="window-dot dot-red"></span>
+            <span class="window-dot dot-amber"></span>
+            <span class="window-dot dot-green"></span>
+          </div>
+          <div class="window-title-bar">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+              <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+              <line x1="6" y1="6" x2="6.01" y2="6"></line>
+              <line x1="6" y1="18" x2="6.01" y2="18"></line>
+            </svg>
+            <span>vytron-cluster-01.internal [ALL 5 SERVERS ONLINE]</span>
+          </div>
+          <a href="index.html" class="hero-btn hero-btn-cyan" style="padding: 4px 10px; font-size: 11px;">
+            Open Live ➔
+          </a>
+        </div>
+
+        <div class="showcase-body">
+          <!-- 5 Servers Grid -->
+          <div class="showcase-servers-grid">
+            <div class="showcase-server-node">
+              <div class="node-header">
+                <span class="node-id">APP-01</span>
+                <span class="node-status-pill">NORMAL</span>
+              </div>
+              <div class="node-name">Application Server</div>
+              <div class="node-metric-bar"><div class="node-metric-fill" style="width: 38%;"></div></div>
+            </div>
+
+            <div class="showcase-server-node">
+              <div class="node-header">
+                <span class="node-id">DB-01</span>
+                <span class="node-status-pill">NORMAL</span>
+              </div>
+              <div class="node-name">Database Server</div>
+              <div class="node-metric-bar"><div class="node-metric-fill" style="width: 44%;"></div></div>
+            </div>
+
+            <div class="showcase-server-node">
+              <div class="node-header">
+                <span class="node-id">AUTH-01</span>
+                <span class="node-status-pill">NORMAL</span>
+              </div>
+              <div class="node-name">Auth &amp; Token Server</div>
+              <div class="node-metric-bar"><div class="node-metric-fill" style="width: 29%;"></div></div>
+            </div>
+
+            <div class="showcase-server-node">
+              <div class="node-header">
+                <span class="node-id">BACKUP-01</span>
+                <span class="node-status-pill">NORMAL</span>
+              </div>
+              <div class="node-name">Backup Storage Vault</div>
+              <div class="node-metric-bar"><div class="node-metric-fill" style="width: 52%;"></div></div>
+            </div>
+
+            <div class="showcase-server-node">
+              <div class="node-header">
+                <span class="node-id">NETWORK-01</span>
+                <span class="node-status-pill">NORMAL</span>
+              </div>
+              <div class="node-name">Core Gateway Server</div>
+              <div class="node-metric-bar"><div class="node-metric-fill" style="width: 35%;"></div></div>
+            </div>
+          </div>
+
+          <!-- Dual Split: Priority Queue & Section E Egress Proof Preview -->
+          <div class="showcase-dual-split" id="priority">
+            <!-- Left: Priority Queue -->
+            <div class="showcase-panel">
+              <div class="showcase-panel-header">
+                <span class="showcase-panel-title">Deterministic Priority Queue (P1–P4)</span>
+                <span class="hero-aiops-badge">AUTO-SORTED</span>
+              </div>
+              <div class="prio-item">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span class="prio-badge prio-p1">P1 CRITICAL</span>
+                  <strong style="color:#fff;">DB-01 Latency Breach</strong>
+                </div>
+                <span style="color:#f87171; font-family:'JetBrains Mono',monospace; font-size:11px;">145.2ms &gt; 120ms</span>
+              </div>
+              <div class="prio-item">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span class="prio-badge prio-p2">P2 HIGH</span>
+                  <strong style="color:#fff;">AUTH-01 High Failure Rate</strong>
+                </div>
+                <span style="color:#fb923c; font-family:'JetBrains Mono',monospace; font-size:11px;">4.8% &gt; 3.0%</span>
+              </div>
+              <p style="font-size:11.5px; color:#94a3b8; margin-top:8px; line-height:1.4;">
+                ⚡ Zero Alert Fatigue: Minor P3/P4 warnings never bury critical P1 infrastructure failures.
+              </p>
+            </div>
+
+            <!-- Right: Section E Egress Proof -->
+            <div class="showcase-panel" id="privacy">
+              <div class="showcase-panel-header">
+                <span class="showcase-panel-title">Section E: Local-First Privacy Proof</span>
+                <span class="hero-aiops-badge">SHA-256 SEALED</span>
+              </div>
+              <div class="egress-preview-code">
+{
+  "tenant_id": "TENANT-01",
+  "server_id": "DB-01",
+  "status": "APPROVED_AND_REDACTED",
+  "blocked_secrets": ["db_password", "internal_ip", "raw_sql"],
+  "sha256": "c40d9fa8c225d77bde35225d110f...717e"
+}
+              </div>
+              <p style="font-size:11.5px; color:#94a3b8; margin-top:8px; line-height:1.4;">
+                🔒 Zero Data Leakage: Raw customer credentials never leave the on-premises boundary.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Deep Dive: Six Core Pillars -->
+    <section class="section-wrap" id="features">
+      <div class="section-head">
+        <div class="section-eyebrow">Enterprise Capabilities</div>
+        <h2 class="section-title">Built for Mission-Critical Observability</h2>
+        <p class="section-desc">
+          Engineered from the ground up for high-stakes site reliability engineering, compliance auditing, and intelligent AI-guided operational recovery.
+        </p>
+      </div>
+
+      <div class="features-grid">
+        <!-- Feature 1 -->
+        <div class="feature-card">
+          <div class="feature-icon-box icon-emerald">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+              <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+              <line x1="6" y1="6" x2="6.01" y2="6"></line>
+              <line x1="6" y1="18" x2="6.01" y2="18"></line>
+            </svg>
+          </div>
+          <h3 class="feature-card-title">5-Server Heterogeneous Fleet</h3>
+          <p class="feature-card-text">
+            Continuous real-time multi-metric sliding window histories across Application, PostgreSQL Database, OAuth Auth, S3 Backup, and Cisco Core Network nodes.
+          </p>
+          <div class="feature-tags">
+            <span class="f-tag">60-Point History</span>
+            <span class="f-tag">Multi-Parameter Charts</span>
+            <span class="f-tag">Dynamic Health</span>
+          </div>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="feature-card">
+          <div class="feature-icon-box icon-red">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+          </div>
+          <h3 class="feature-card-title">Deterministic Priority Queue</h3>
+          <p class="feature-card-text">
+            Strict P1 &gt; P2 &gt; P3 &gt; P4 incident ranking ensures urgent cluster outages immediately commandeer operator focus, eliminating noisy notification overload.
+          </p>
+          <div class="feature-tags">
+            <span class="f-tag">P1 Outage</span>
+            <span class="f-tag">P2 Degradation</span>
+            <span class="f-tag">Auto-Recovery</span>
+          </div>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="feature-card">
+          <div class="feature-icon-box icon-cyan">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+          </div>
+          <h3 class="feature-card-title">Verifiable Egress Privacy Guard</h3>
+          <p class="feature-card-text">
+            Section E strictly separates customer-local Tier 1 raw logs from Tier 2 SaaS metadata. Operational passwords, JWTs, and internal IPs never cross the egress perimeter.
+          </p>
+          <div class="feature-tags">
+            <span class="f-tag">Zero Data Leakage</span>
+            <span class="f-tag">SHA-256 Hashes</span>
+            <span class="f-tag">Audit Logs</span>
+          </div>
+        </div>
+
+        <!-- Feature 4 -->
+        <div class="feature-card" id="ai-rag">
+          <div class="feature-icon-box icon-purple">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2a10 10 0 1 0 10 10H12V2z"></path>
+              <path d="M12 12L2.1 12.05"></path>
+              <path d="M12 12l4.9-8.5"></path>
+            </svg>
+          </div>
+          <h3 class="feature-card-title">RAG AI Incident Troubleshooter</h3>
+          <p class="feature-card-text">
+            ChromaDB vector database indexed with 35,000+ chunks of production runbooks synthesizes 8-section diagnostic plans with actionable terminal remediation commands.
+          </p>
+          <div class="feature-tags">
+            <span class="f-tag">ChromaDB Vector</span>
+            <span class="f-tag">8-Section Output</span>
+            <span class="f-tag">Grounded Prompts</span>
+          </div>
+        </div>
+
+        <!-- Feature 5 -->
+        <div class="feature-card">
+          <div class="feature-icon-box icon-amber">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+          </div>
+          <h3 class="feature-card-title">Chaos Simulation Engine</h3>
+          <p class="feature-card-text">
+            Test platform resilience in real time. Trigger random incidents across 1 to 5 nodes, inject full cluster outages, and verify automatic zero-loss queue buffering and replay.
+          </p>
+          <div class="feature-tags">
+            <span class="f-tag">Chaos Injection</span>
+            <span class="f-tag">Buffer Recovery</span>
+            <span class="f-tag">Zero Loss</span>
+          </div>
+        </div>
+
+        <!-- Feature 6 -->
+        <div class="feature-card">
+          <div class="feature-icon-box icon-blue">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+          </div>
+          <h3 class="feature-card-title">Google OAuth 2.0 &amp; RBAC</h3>
+          <p class="feature-card-text">
+            Enterprise authentication with backend signature verification. Strict separation of IT Team operational access from pre-authorized central Administrator management.
+          </p>
+          <div class="feature-tags">
+            <span class="f-tag">Google OIDC</span>
+            <span class="f-tag">HttpOnly Cookies</span>
+            <span class="f-tag">Admin Gate</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Architecture Pipeline Flow -->
+    <section class="section-wrap" id="architecture">
+      <div class="section-head">
+        <div class="section-eyebrow">Zero-Trust Pipeline</div>
+        <h2 class="section-title">End-to-End Architectural Flow</h2>
+        <p class="section-desc">
+          How telemetry flows safely from on-premises nodes to verified SaaS intelligence without risking operational credentials.
+        </p>
+      </div>
+
+      <div class="pipeline-card">
+        <div class="pipeline-flow">
+          <div class="pipe-step">
+            <div class="pipe-step-num">STEP 01</div>
+            <div class="pipe-step-title">Customer On-Premises</div>
+            <div class="pipe-step-desc">5 server agents collect CPU, latency, connections, and local operational traces.</div>
+          </div>
+
+          <div class="pipe-arrow">➔</div>
+
+          <div class="pipe-step" style="border-color: rgba(239, 68, 68, 0.4);">
+            <div class="pipe-step-num" style="color: #f87171;">STEP 02 (TIER 1)</div>
+            <div class="pipe-step-title">Local Privacy Filter</div>
+            <div class="pipe-step-desc">Passwords, tokens, SNMP strings, and internal IPs stripped by strict allow-list.</div>
+          </div>
+
+          <div class="pipe-arrow">➔</div>
+
+          <div class="pipe-step" style="border-color: rgba(6, 182, 212, 0.4);">
+            <div class="pipe-step-num" style="color: #22d3ee;">STEP 03</div>
+            <div class="pipe-step-title">SHA-256 Cryptographic Seal</div>
+            <div class="pipe-step-desc">Payload hashed locally for tamper-proof mathematical transmission proof.</div>
+          </div>
+
+          <div class="pipe-arrow">➔</div>
+
+          <div class="pipe-step" style="border-color: rgba(16, 185, 129, 0.4);">
+            <div class="pipe-step-num">STEP 04 (TIER 2)</div>
+            <div class="pipe-step-title">SaaS Observability</div>
+            <div class="pipe-step-desc">Sanitized metadata streamed over TLS to WebSocket UI and priority queue.</div>
+          </div>
+
+          <div class="pipe-arrow">➔</div>
+
+          <div class="pipe-step" style="border-color: rgba(139, 92, 246, 0.4);">
+            <div class="pipe-step-num" style="color: #a78bfa;">STEP 05</div>
+            <div class="pipe-step-title">RAG AI Remediation</div>
+            <div class="pipe-step-desc">Vector knowledge retrieved from ChromaDB to guide incident recovery.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bottom CTA Banner -->
+    <section class="section-wrap">
+      <div class="hero-cta-banner">
+        <h2 class="cta-banner-title">Experience Autonomous Observability Live</h2>
+        <p class="cta-banner-desc">
+          Test real-time 5-server telemetry, trigger chaos engineering incidents, compare side-by-side Tier 1 local secrets against Tier 2 SaaS egress proofs, and interact with the RAG AI troubleshooter.
+        </p>
+        <div style="display:flex; justify-content:center; gap:16px; flex-wrap:wrap;">
+          <a href="index.html" class="hero-btn hero-btn-primary hero-btn-lg">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <polygon points="5 3 19 12 5 21 5 3" fill="currentColor"></polygon>
+            </svg>
+            <span>Launch Live Dashboard</span>
+          </a>
+          <a href="chat.html" class="hero-btn hero-btn-cyan hero-btn-lg">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span>Open IT Chatbot</span>
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="hero-footer">
+    <div class="hero-footer-content">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-weight:800; color:#fff;">VYTRON AIOps</span>
+        <span style="color:#64748b;">•</span>
+        <span class="footer-copy">Autonomous Infrastructure Observability &amp; Privacy-First Intelligence</span>
+      </div>
+      <div class="footer-tags">
+        <a href="index.html" class="footer-tag-item">Dashboard</a>
+        <a href="chat.html" class="footer-tag-item">IT Chatbot</a>
+        <a href="#architecture" class="footer-tag-item">Architecture</a>
+        <a href="#privacy" class="footer-tag-item">Data Privacy</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

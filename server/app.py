@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Request, Depends, Query, status
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -453,8 +454,15 @@ async def websocket_endpoint(websocket: WebSocket):
         if websocket in active_connections:
             active_connections.remove(websocket)
 
-# ── Mount Frontend Static Files ─────────────────────────────────────────
+# ── Mount Frontend Static Files & Hero Landing Routes ─────────────────────
 
 frontend_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend")
+
+@app.get("/hero")
+@app.get("/landing")
+def get_hero_landing():
+    """Serves the VYTRON AIOps Hero & Platform Overview page."""
+    return FileResponse(os.path.join(frontend_dir, "hero.html"))
+
 if os.path.exists(frontend_dir):
     app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="frontend")
