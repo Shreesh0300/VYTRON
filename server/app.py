@@ -7,6 +7,7 @@ Powered by the dynamic Randomized Incident Generation Engine.
 import os
 import json
 import asyncio
+from datetime import datetime, timezone
 from typing import Set, Optional, Any
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
@@ -316,6 +317,36 @@ def toggle_outage():
     new_state = not simulator.egress_engine._outage_simulated
     res = simulator.egress_engine.set_outage(new_state)
     return res
+
+@app.post("/api/collectors/heartbeat")
+async def receive_collector_heartbeat(request: Request):
+    """Heartbeat endpoint for Tier 1 local collectors."""
+    try:
+        data = await request.json()
+    except Exception:
+        data = {}
+    simulator.collector_connected = True
+    return {
+        "status": "online",
+        "acknowledged": True,
+        "collector_id": data.get("collector_id", "COLLECTOR-01"),
+        "timestamp_utc": datetime.now(timezone.utc).isoformat()
+    }
+
+@app.post("/api/telemetry")
+async def receive_collector_telemetry(request: Request):
+    """Metadata telemetry receiver endpoint for Tier 1 local collectors."""
+    try:
+        data = await request.json()
+    except Exception:
+        data = {}
+    simulator.collector_connected = True
+    return {
+        "status": "received",
+        "acknowledged": True,
+        "payload_id": data.get("payload_id", "UNKNOWN"),
+        "timestamp_utc": datetime.now(timezone.utc).isoformat()
+    }
 
 @app.get("/api/servers")
 def get_servers():
